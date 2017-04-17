@@ -8,11 +8,16 @@ import android.util.Log;
 
 import java.util.Calendar;
 import java.util.Locale;
+import java.util.TimeZone;
 
-public final class Util {
+import static android.R.attr.timeZone;
 
-    public static Calendar calendar = Calendar.getInstance();
+public final class WeatherUtil {
 
+    public static final int DAYLIGHT_TIME_START = 7;
+    public static final int DAYLIGHT_TIME_END = 18;
+
+    public static final String TEMP_COMMON_UNIT = "°";
 
     private static String versionName = null;
 

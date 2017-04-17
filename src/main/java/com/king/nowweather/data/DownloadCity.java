@@ -19,7 +19,7 @@ import java.util.ArrayList;
 public class DownloadCity {
 
     public interface DownLoadCityListener {
-        void onCityDownLoadResult(ArrayList<CityInfo> cityInfo);
+        void onCityDownLoadResult(ArrayList<CityInfo> cityInfoList);
     }
 
 
@@ -49,8 +49,8 @@ public class DownloadCity {
 
     public void startDownloadCity(final String searchStr, DownLoadCityListener listener) {
         mDownloadCityListener = listener;
-        countryCode = Util.isChinese() ? "CN" : "US";
-        language = Util.isChinese() ? "zh-cn" : "en";
+        countryCode = WeatherUtil.isChinese() ? "CN" : "US";
+        language = WeatherUtil.isChinese() ? "zh-cn" : "en";
         new Thread(new Runnable() {
             public void run() {
                 try {

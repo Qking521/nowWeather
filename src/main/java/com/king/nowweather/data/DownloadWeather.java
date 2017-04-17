@@ -45,7 +45,7 @@ public class DownloadWeather {
     private static final String CURRENT_VISIBILITY = "Visibility";
 
     private static final String FORECAST_DAILY_FORECASTS = "DailyForecasts";
-    private static final String FORECAST_WEATHER_ICON = "weathericon";
+    private static final String FORECAST_WEATHER_ICON = "WeatherIcon";
     private static final String FORECAST_DAY = "Day";
     private static final String FORECAST_NIGHT = "Night";
     private static final String FORECAST_ICON = "Icon";
@@ -59,25 +59,22 @@ public class DownloadWeather {
     private String language = "";
     private boolean details = true;
     private String countryCode = "";
+    private int mResquestCityCount = 0;
 
     private static final String BASE_CUR_URI = "http://api.accuweather.com/currentconditions/v1/%s.json?";
     private static final String BASE_FORE_URI = "http://api.accuweather.com/forecasts/v1/daily/10day/%s?";
 
-    private List<CityInfo> cityInfos = new ArrayList<CityInfo>();
     private List<WeatherData.ForecastDetail> forecastDetails = new ArrayList<WeatherData.ForecastDetail>();
     private List<WeatherData> mReqWeatherDatas = new ArrayList<WeatherData>();;
-    public DownLoadWeatherListener mDownLoadWeatherListener;
+    private DownLoadWeatherListener mDownLoadWeatherListener;
 
     public DownloadWeather(){
-        this.countryCode = Util.isChinese() ? "CN" : "US";
-        this.language = Util.isChinese() ? "zh" : "en";
+        this.countryCode = WeatherUtil.isChinese() ? "CN" : "US";
+        this.language = WeatherUtil.isChinese() ? "zh" : "en";
     }
 
     public void startDownloadWeather(List<CityInfo> cityInfos, DownLoadWeatherListener downLoadWeatherListener) {
-        if (this.cityInfos != null && !this.cityInfos.isEmpty()) {
-            this.cityInfos.clear();
-        }
-        this.cityInfos = cityInfos;
+        mResquestCityCount = cityInfos.size();
         mDownLoadWeatherListener = downLoadWeatherListener;
         mReqWeatherDatas.clear();
         for (CityInfo cityInfo : cityInfos) {
@@ -92,7 +89,7 @@ public class DownloadWeather {
             case 1:
                 mReqWeatherDatas.add((WeatherData) msg.obj);
                 //wait for all data collected, then update UI.
-                if (mReqWeatherDatas.size() == cityInfos.size()) {
+                if (mReqWeatherDatas.size() == mResquestCityCount) {
                     mDownLoadWeatherListener.onWeatherUpdatedSuccess(mReqWeatherDatas);
                 }
                 break;
@@ -157,6 +154,7 @@ public class DownloadWeather {
                 weatherData.setIcon(convertIcon(object.getInt(CURRENT_WEATHER_ICON)));
                 weatherData.setCurTemp(object.getJSONObject(TEMPERATURE).getJSONObject(METRIC).getString(VALUE));
                 weatherData.setRealfeel(object.getJSONObject(CURRENT_REALFEEL).getJSONObject(METRIC).getString(VALUE));
+                weatherData.setLastUpdateTime(System.currentTimeMillis());
             } catch (JSONException e) {
                 Log.v("wq", "getCurrentWeatherInfo e=" + e.getMessage());
             }

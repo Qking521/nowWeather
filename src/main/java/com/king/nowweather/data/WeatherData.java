@@ -5,11 +5,16 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
-import java.util.TimeZone;
+
+import static com.king.nowweather.data.WeatherUtil.DAYLIGHT_TIME_END;
+import static com.king.nowweather.data.WeatherUtil.DAYLIGHT_TIME_START;
 
 public final class WeatherData extends Details implements Comparable<WeatherData> {
 
 
+
+    private long id ;
+    //city info
     private String cityName = ""; // city name
     private String city = "";
     private String province = "";
@@ -18,33 +23,39 @@ public final class WeatherData extends Details implements Comparable<WeatherData
 	private String postalCode = "";
     private String longitude = "";
     private String latitude = "";
-    private String curTemp = "";
     private String timeZone = "";
     private String curDate = "";
-    private String curDayOfWeek = "";
-    private Calendar calendar = null;
-    private String realfeel = ""; //that is personal feeling
     private String location = "";
 	private String locationCity = "false";
     private boolean notifyAlarm = false;
-    private boolean inStatusBar = false;
 
-    private long lastRefreshTime = 0;
-    private String lastRefreshString = "";
+    //update time
+    private long lastUpdateTime = 0;
+    private String lastUpdateFormatTime = "";
+
+    //forecast
     private List<ForecastDetail> forecastDetail = new ArrayList<ForecastDetail>();
 
+
+    public long getId() {
+        return id;
+    }
+
+    public void setId(long id) {
+        this.id = id;
+    }
 
     public String getCityName() {
         return cityName;
     }
 
 
-    public String city() {
+    public String getCity() {
         return city;
     }
 
 
-    public String province() {
+    public String getProvince() {
         return province;
     }
 
@@ -91,15 +102,7 @@ public final class WeatherData extends Details implements Comparable<WeatherData
         }
     }
 
-    public String getRealfeel() {
-		return realfeel;
-	}
 
-	public void setRealfeel(String realfeel) {
-		if (realfeel != null) {
-			this.realfeel = realfeel;
-		}
-	}
 
     public String getLocation() {
 		return location;
@@ -131,36 +134,16 @@ public final class WeatherData extends Details implements Comparable<WeatherData
         }
     }
 
-
-    public String getCurTemp() {
-        return curTemp;
-    }
-
-
-    public String getCurTemp(String unit) {
-        if (isEmpty(unit)) {
-            unit = TEMP_COMMON_UNIT;
-        }
-        return curTemp + unit;
-    }
-
-    public void setCurTemp(String curTemp) {
-        if (curTemp != null) {
-            this.curTemp = curTemp;
-        }
-    }
-
-
     public long lastRefreshed() {
-        return lastRefreshTime;
+        return lastUpdateTime;
     }
 
 
-    public String getLastRefreshTime() {
-        if (isEmpty(lastRefreshString)) {
-            lastRefreshString = getLastRefreshTime("yyyy/MM/dd HH:mm");
+    public String getLastUpdateTime() {
+        if (isEmpty(lastUpdateFormatTime)) {
+            lastUpdateFormatTime = getLastRefreshTime("yyyy/MM/dd HH:mm");
         }
-        return lastRefreshString;
+        return lastUpdateFormatTime;
     }
 
 
@@ -169,11 +152,11 @@ public final class WeatherData extends Details implements Comparable<WeatherData
             format = "yyyy/MM/dd HH:mm";
         }
         SimpleDateFormat dateFormat = new SimpleDateFormat(format);
-        return dateFormat.format(lastRefreshTime);
+        return dateFormat.format(lastUpdateTime);
     }
 
-    public void setLastRefreshTime(long lastRefreshTime) {
-        this.lastRefreshTime = lastRefreshTime;
+    public void setLastUpdateTime(long lastUpdateTime) {
+        this.lastUpdateTime = lastUpdateTime;
     }
 
 
@@ -184,17 +167,6 @@ public final class WeatherData extends Details implements Comparable<WeatherData
     public void setCurrentDate(String curDate) {
         if (curDate != null) {
             this.curDate = curDate;
-        }
-    }
-
-
-    public String getCurrentDayOfWeek() {
-        return curDayOfWeek;
-    }
-
-    public void setCurrentDayOfWeek(String curDayOfWeek) {
-        if (curDayOfWeek != null) {
-            this.curDayOfWeek = curDayOfWeek;
         }
     }
 
@@ -209,16 +181,7 @@ public final class WeatherData extends Details implements Comparable<WeatherData
     }
 
 
-    public Calendar getCalendar() {
-        if (calendar == null) {
-            if (timeZone != null && !"".equals(timeZone)) {
-                calendar = Calendar.getInstance(TimeZone.getTimeZone(timeZone));
-            } else {
-                calendar = Util.calendar;
-            }
-        }
-        return calendar;
-    }
+
 
 
     String getTimeZone() {
@@ -234,22 +197,13 @@ public final class WeatherData extends Details implements Comparable<WeatherData
 
 
     public boolean isDaylight() {
-        Calendar c = getCalendar();
+        Calendar c = Calendar.getInstance();
         if (c != null) {
             c.setTimeInMillis(System.currentTimeMillis());
             int hour = c.get(Calendar.HOUR_OF_DAY);
             return (hour >= DAYLIGHT_TIME_START && hour <= DAYLIGHT_TIME_END);
         }
         return true;
-    }
-
-
-    public boolean isInStatusBar() {
-        return inStatusBar;
-    }
-
-    public void setInStatusBar(boolean statusBar) {
-        this.inStatusBar = statusBar;
     }
 
 
@@ -315,7 +269,6 @@ public final class WeatherData extends Details implements Comparable<WeatherData
             this.orderId = orderId;
         }
     }
-
 
     @Override
     public int compareTo(WeatherData another) {

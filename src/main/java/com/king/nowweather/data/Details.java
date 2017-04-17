@@ -1,27 +1,27 @@
 package com.king.nowweather.data;
 
-public class Details {
-    public final int DAYLIGHT_TIME_START = 7;
-    public final int DAYLIGHT_TIME_END = 18;
+import org.litepal.crud.DataSupport;
 
-    public final String TEMP_COMMON_UNIT = "°";
+import static com.king.nowweather.data.WeatherUtil.TEMP_COMMON_UNIT;
 
+public class Details extends DataSupport {
+
+    //temperature
+    private String curTemp = "";
     private String lowTemp = "";
     private String highTemp = "";
     private String tempUnit = "";
+    private String realfeel = ""; //that is personal feeling
     private String icon = "";
-    private String condition = "";
-    private String humidity = "";
+    //wind
     private String windVelocity = "";
     private String velocityUnit = "";
     private String windDirection = "";
     private String windPower = "";
+    //weather relevant
     private String chill = "";
-    private String dayOfWeek = "";
-    private String dateTime = "";
-    private String forecastDate = "";
-    private String forecastSource = "";
-
+    private String condition = "";
+    private String humidity = "";
     private String visibility = "";
     private String pressure = "";
     private String rising = "";
@@ -29,6 +29,23 @@ public class Details {
     private String sunset = "";
 
 
+    public String getCurTemp() {
+        return curTemp;
+    }
+
+
+    public String getCurTemp(String unit) {
+        if (isEmpty(unit)) {
+            unit = TEMP_COMMON_UNIT;
+        }
+        return curTemp + unit;
+    }
+
+    public void setCurTemp(String curTemp) {
+        if (curTemp != null) {
+            this.curTemp = curTemp;
+        }
+    }
 
     public String getChill() {
         return chill;
@@ -116,59 +133,6 @@ public class Details {
             this.humidity = humidity;
         }
     }
-
-
-    public String getDayOfWeek() {
-        return dayOfWeek;
-    }
-
-    public void setDayOfWeek(String dayOfWeek) {
-        if (dayOfWeek != null) {
-        	try {
-        		this.dayOfWeek = dayOfWeek.substring(0, 3);
-			} catch (Exception e) {
-			}
-			
-        }
-    }
-
-
-    public String getDateTime() {
-        return dateTime;
-    }
-
-    public void setDateTime(String dateTime) {
-        if (dateTime != null) {
-        	try {
-        		this.dateTime = dateTime.substring(0, 3);
-			} catch (Exception e) {
-			}
-			
-        }
-    }
-
-
-    public String getForecastDate() {
-        return forecastDate;
-    }
-
-    public void setForecastDate(String forecastDate) {
-        if (forecastDate != null) {
-            this.forecastDate = forecastDate;
-        }
-    }
-
-
-    public String getForecastSource() {
-        return forecastSource;
-    }
-
-    public void setForecastSource(String forecastSource) {
-        if (forecastSource != null) {
-            this.forecastSource = forecastSource;
-        }
-    }
-
 
     public String getWindVelocity() {
         return windVelocity;
@@ -326,5 +290,15 @@ public class Details {
             return true;
         }
         return false;
+    }
+
+    public String getRealfeel() {
+        return realfeel;
+    }
+
+    public void setRealfeel(String realfeel) {
+        if (realfeel != null) {
+            this.realfeel = realfeel;
+        }
     }
 }
