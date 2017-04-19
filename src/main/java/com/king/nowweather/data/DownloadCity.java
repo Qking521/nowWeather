@@ -5,6 +5,9 @@ import android.os.Message;
 import android.util.Log;
 
 
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -14,6 +17,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.util.ArrayList;
+import java.util.List;
 
 
 public class DownloadCity {
@@ -46,16 +50,19 @@ public class DownloadCity {
     private static final String BASE_URI = "http://api.accuweather.com/locations/v1/%s/search?q="; 
     private ArrayList<CityInfo> mCityInfos = new ArrayList<CityInfo>();
     private DownLoadCityListener mDownloadCityListener;
+    private Gson mGson;
 
     public void startDownloadCity(final String searchStr, DownLoadCityListener listener) {
         mDownloadCityListener = listener;
+        mGson = new Gson();
         countryCode = WeatherUtil.isChinese() ? "CN" : "US";
         language = WeatherUtil.isChinese() ? "zh-cn" : "en";
         new Thread(new Runnable() {
             public void run() {
                 try {
-                	JSONArray jsonArray = getJsonArrayFromUrl(getCityInfoQueryUrl(searchStr));
-                    parseCityInfoFromJsonArray(jsonArray);
+//                	JSONArray jsonArray = getJsonArrayFromUrl(getCityInfoQueryUrl(searchStr));
+//                    parseCityInfoFromJsonArray(jsonArray);
+                    parseCityInfoFromJsonString(getJsonStringFromUrl(getCityInfoQueryUrl(searchStr)));
                 	mHandler.sendMessage(mHandler.obtainMessage());
                 } catch (Exception e) {
                     Log.e("wq", "Error message = " + e.getMessage());
@@ -64,6 +71,8 @@ public class DownloadCity {
             }
         }).start();
     }
+
+
 
     private String getCityInfoQueryUrl(String searchStr) throws Exception{
 		StringBuilder builder = new StringBuilder();
@@ -100,11 +109,35 @@ public class DownloadCity {
 		HttpURLConnection conn = (HttpURLConnection) new URL(baseUri).openConnection();
 		byte[] byteData = getByteInputStream(conn.getInputStream());
         String string = new String(byteData);
-        jsonArray = new JSONArray(new String(byteData));
+        jsonArray = new JSONArray(string);
 		return jsonArray;
 	}
 
-	private byte[] getByteInputStream(InputStream inputStream) throws Exception{
+    private String getJsonStringFromUrl(String baseUri) throws Exception{
+        HttpURLConnection conn = (HttpURLConnection) new URL(baseUri).openConnection();
+        byte[] byteData = getByteInputStream(conn.getInputStream());
+        String jsonString = new String(byteData);
+        return jsonString;
+    }
+
+    private void parseCityInfoFromJsonString(String jsonString) {
+        List<CityInfoMeta> cityInfoMetaList = mGson.fromJson(jsonString, new TypeToken<List<CityInfoMeta>>(){}.getType());
+        for (CityInfoMeta cityInfoMeta : cityInfoMetaList) {
+            CityInfo cityInfo = new CityInfo();
+            cityInfo.setCityKey(cityInfoMeta.getKey());
+            cityInfo.setCityName(cityInfoMeta.getLocalizedName());
+            cityInfo.setCountry(cityInfoMeta.getCountry().getLocalizedName());
+            cityInfo.setLatitude(String.valueOf(cityInfoMeta.getGeoPosition().getLatitude()));
+            cityInfo.setLongitude(String.valueOf(cityInfoMeta.getGeoPosition().getLongitude()));
+            cityInfo.setProvince(cityInfoMeta.getAdministrativeArea().getLocalizedName());
+            cityInfo.setFullName(cityInfo.getProvince() + ", " + cityInfo.getCountry());
+            Log.v("wq", "parseCityInfoFromJson: cityInfo="+ cityInfo.toString());
+            mCityInfos.add(cityInfo);
+        }
+
+    }
+
+    private byte[] getByteInputStream(InputStream inputStream) throws Exception{
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
 		byte[] tempByte = new byte[1024];
 		int len = 0;

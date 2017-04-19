@@ -14,6 +14,9 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import com.king.nowweather.data.WeatherData.ForecastDetail;
 
 public class DownloadWeather {
@@ -65,10 +68,13 @@ public class DownloadWeather {
     private static final String BASE_FORE_URI = "http://api.accuweather.com/forecasts/v1/daily/10day/%s?";
 
     private List<WeatherData.ForecastDetail> forecastDetails = new ArrayList<WeatherData.ForecastDetail>();
-    private List<WeatherData> mReqWeatherDatas = new ArrayList<WeatherData>();;
+    private List<WeatherData> mReqWeatherDatas = new ArrayList<WeatherData>();
+    ;
     private DownLoadWeatherListener mDownLoadWeatherListener;
+    private Gson mGson;
 
-    public DownloadWeather(){
+    public DownloadWeather() {
+        mGson = new Gson();
         this.countryCode = WeatherUtil.isChinese() ? "CN" : "US";
         this.language = WeatherUtil.isChinese() ? "zh" : "en";
     }
@@ -86,18 +92,20 @@ public class DownloadWeather {
     private Handler handler = new Handler() {
         public void handleMessage(android.os.Message msg) {
             switch (msg.what) {
-            case 1:
-                mReqWeatherDatas.add((WeatherData) msg.obj);
-                //wait for all data collected, then update UI.
-                if (mReqWeatherDatas.size() == mResquestCityCount) {
-                    mDownLoadWeatherListener.onWeatherUpdatedSuccess(mReqWeatherDatas);
-                }
-                break;
+                case 1:
+                    mReqWeatherDatas.add((WeatherData) msg.obj);
+                    //wait for all data collected, then update UI.
+                    if (mReqWeatherDatas.size() == mResquestCityCount) {
+                        mDownLoadWeatherListener.onWeatherUpdatedSuccess(mReqWeatherDatas);
+                    }
+                    break;
 
-            default:
-                break;
+                default:
+                    break;
             }
-        };
+        }
+
+        ;
     };
 
     private void downloadWeatherInfo(final CityInfo cityInfo, final WeatherData weatherData) {
@@ -111,11 +119,15 @@ public class DownloadWeather {
                     weatherData.setLongitude(cityInfo.getLongitude());
                     weatherData.setFullName(cityInfo.getFullName());
 
-                    JSONArray curjsonArray = getJsonArrayFromUrl(getWeatherDataQueryUrl(cityInfo.getCityKey(), BASE_CUR_URI));
-                    getCurrentWeatherInfo(curjsonArray, weatherData);
+//                    JSONArray curjsonArray = getJsonArrayFromUrl(getWeatherDataQueryUrl(cityInfo.getCityKey(), BASE_CUR_URI));
+//                    getCurrentWeatherInfo(curjsonArray, weatherData);
+                    String curWeatherJsonString = getJsonStringFromUrl(getWeatherDataQueryUrl(cityInfo.getCityKey(), BASE_CUR_URI));
+                    parseCurrentWeatherInfo(curWeatherJsonString, weatherData);
 
-                    JSONObject foreJsonObject = getJsonObjectFromUrl(getWeatherDataQueryUrl(cityInfo.getCityKey(), BASE_FORE_URI));
-                    getForecastWeatherInfo(foreJsonObject, weatherData);
+//                    JSONObject foreJsonObject = getJsonObjectFromUrl(getWeatherDataQueryUrl(cityInfo.getCityKey(), BASE_FORE_URI));
+//                    getForecastWeatherInfo(foreJsonObject, weatherData);
+                    String foreWeatherJsonString = getJsonStringFromUrl(getWeatherDataQueryUrl(cityInfo.getCityKey(), BASE_FORE_URI));
+                    parseForecastWeatherInfo(foreWeatherJsonString, weatherData);
 
                     handler.sendMessage(handler.obtainMessage(1, weatherData));
                 } catch (Exception e) {
@@ -140,8 +152,36 @@ public class DownloadWeather {
                 .append("&")
                 .append(BASE_DETAILS)
                 .append(details);
-        Log.v(TAG, "getWeatherDataQueryUrl: "+ builder.toString());
+        Log.v(TAG, "getWeatherDataQueryUrl: " + builder.toString());
         return builder.toString();
+    }
+
+    private void parseCurrentWeatherInfo(String jsonString, WeatherData weatherData) {
+
+        List<WeatherInfoMeta> weatherInfoMetaList = mGson.fromJson(jsonString,
+                new TypeToken<List<WeatherInfoMeta>>() {
+                }.getType());
+        for (WeatherInfoMeta weatherInfoMeta : weatherInfoMetaList) {
+            weatherData.setCurTemp(String.valueOf(weatherInfoMeta.getTemperature().getMetric().getValue()));
+            weatherData.setCondition(weatherInfoMeta.getWeatherText());
+            weatherData.setIcon(convertIcon(weatherInfoMeta.getWeatherIcon()));
+            weatherData.setRealfeel(String.valueOf(weatherInfoMeta.getRealFeelTemperature().getMetric().getValue()));
+            weatherData.setLastUpdateTime(System.currentTimeMillis());
+        }
+    }
+
+    private void parseForecastWeatherInfo(String foreWeatherJsonString, WeatherData weatherData) {
+        forecastDetails.clear();
+        String DayOrNight = weatherData.isDaylight() ? FORECAST_DAY : FORECAST_NIGHT;
+        WeatherForecastInfoMeta weatherForecastInfoMeta = mGson.fromJson(foreWeatherJsonString, WeatherForecastInfoMeta.class);
+        List<WeatherForecastInfoMeta.DailyForecasts> dailyForecastsEntityList = weatherForecastInfoMeta.getDailyForecasts();
+        for (WeatherForecastInfoMeta.DailyForecasts dailyForecasts : dailyForecastsEntityList) {
+            ForecastDetail forecastDetail = new ForecastDetail();
+            forecastDetail.setHighTemp(String.valueOf(dailyForecasts.getTemperature().getMaximum().getValue()));
+            forecastDetail.setLowTemp(String.valueOf(dailyForecasts.getTemperature().getMinimum().getValue()));
+            forecastDetails.add(forecastDetail);
+        }
+        weatherData.setForecastDetail(forecastDetails);
     }
 
     private void getCurrentWeatherInfo(JSONArray curjsonArray, WeatherData weatherData) {
@@ -163,9 +203,9 @@ public class DownloadWeather {
 
     private String convertIcon(int icon) {
         String newIcon = "";
-        if (icon >=0 && icon <= 9) {
+        if (icon >= 0 && icon <= 9) {
             newIcon = "_0".concat(String.valueOf(icon)).concat("_");
-        }else {
+        } else {
             newIcon = "_".concat(String.valueOf(icon)).concat("_");
         }
         return newIcon;
@@ -201,6 +241,19 @@ public class DownloadWeather {
         } catch (JSONException e) {
             Log.v("wq", "getForecastWeatherInfo e=" + e.getMessage());
         }
+    }
+
+    private String getJsonStringFromUrl(String baseUri) {
+        String jsonString = "";
+        try {
+            HttpURLConnection conn = (HttpURLConnection) new URL(baseUri).openConnection();
+            byte[] byteData = getByteInputStream(conn.getInputStream());
+            jsonString = new String(byteData);
+            return jsonString;
+        } catch (Exception e) {
+            Log.v("wq", "getJsonArrayFromUrl e=" + e.getMessage());
+        }
+        return jsonString;
     }
 
     protected JSONArray getJsonArrayFromUrl(String baseUri) {
@@ -241,5 +294,6 @@ public class DownloadWeather {
         }
         return out.toByteArray();
     }
+
 
 }
