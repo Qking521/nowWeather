@@ -17,7 +17,6 @@ import java.util.List;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import com.king.nowweather.data.WeatherData.ForecastDetail;
 
 public class DownloadWeather {
 
@@ -26,7 +25,7 @@ public class DownloadWeather {
     public interface DownLoadWeatherListener {
         void onWeatherUpdateFailed(int paramInt);
 
-        void onWeatherUpdatedSuccess(List<WeatherData> reqWeatherDataList);
+        void onWeatherUpdatedSuccess(List<WeatherInfo> reqWeatherInfoList);
     }
 
     private static final String METRIC = "Metric";
@@ -67,8 +66,7 @@ public class DownloadWeather {
     private static final String BASE_CUR_URI = "http://api.accuweather.com/currentconditions/v1/%s.json?";
     private static final String BASE_FORE_URI = "http://api.accuweather.com/forecasts/v1/daily/10day/%s?";
 
-    private List<WeatherData.ForecastDetail> forecastDetails = new ArrayList<WeatherData.ForecastDetail>();
-    private List<WeatherData> mReqWeatherDatas = new ArrayList<WeatherData>();
+    private List<WeatherInfo> mReqWeatherDatas = new ArrayList<WeatherInfo>();
     ;
     private DownLoadWeatherListener mDownLoadWeatherListener;
     private Gson mGson;
@@ -84,7 +82,7 @@ public class DownloadWeather {
         mDownLoadWeatherListener = downLoadWeatherListener;
         mReqWeatherDatas.clear();
         for (CityInfo cityInfo : cityInfos) {
-            WeatherData weatherData = new WeatherData();
+            WeatherInfo weatherData = new WeatherInfo();
             downloadWeatherInfo(cityInfo, weatherData);
         }
     }
@@ -93,7 +91,7 @@ public class DownloadWeather {
         public void handleMessage(android.os.Message msg) {
             switch (msg.what) {
                 case 1:
-                    mReqWeatherDatas.add((WeatherData) msg.obj);
+                    mReqWeatherDatas.add((WeatherInfo) msg.obj);
                     //wait for all data collected, then update UI.
                     if (mReqWeatherDatas.size() == mResquestCityCount) {
                         mDownLoadWeatherListener.onWeatherUpdatedSuccess(mReqWeatherDatas);
@@ -108,7 +106,7 @@ public class DownloadWeather {
         ;
     };
 
-    private void downloadWeatherInfo(final CityInfo cityInfo, final WeatherData weatherData) {
+    private void downloadWeatherInfo(final CityInfo cityInfo, final WeatherInfo weatherData) {
         new Thread(new Runnable() {
             public void run() {
                 try {
@@ -156,7 +154,7 @@ public class DownloadWeather {
         return builder.toString();
     }
 
-    private void parseCurrentWeatherInfo(String jsonString, WeatherData weatherData) {
+    private void parseCurrentWeatherInfo(String jsonString, WeatherInfo weatherData) {
 
         List<WeatherInfoMeta> weatherInfoMetaList = mGson.fromJson(jsonString,
                 new TypeToken<List<WeatherInfoMeta>>() {
@@ -170,21 +168,19 @@ public class DownloadWeather {
         }
     }
 
-    private void parseForecastWeatherInfo(String foreWeatherJsonString, WeatherData weatherData) {
-        forecastDetails.clear();
-        String DayOrNight = weatherData.isDaylight() ? FORECAST_DAY : FORECAST_NIGHT;
+    private void parseForecastWeatherInfo(String foreWeatherJsonString, WeatherInfo weatherInfo) {
+        List<WeatherForecastInfo> weatherForecastInfoList = weatherInfo.getForecastDetailList();
         WeatherForecastInfoMeta weatherForecastInfoMeta = mGson.fromJson(foreWeatherJsonString, WeatherForecastInfoMeta.class);
         List<WeatherForecastInfoMeta.DailyForecasts> dailyForecastsEntityList = weatherForecastInfoMeta.getDailyForecasts();
         for (WeatherForecastInfoMeta.DailyForecasts dailyForecasts : dailyForecastsEntityList) {
-            ForecastDetail forecastDetail = new ForecastDetail();
-            forecastDetail.setHighTemp(String.valueOf(dailyForecasts.getTemperature().getMaximum().getValue()));
-            forecastDetail.setLowTemp(String.valueOf(dailyForecasts.getTemperature().getMinimum().getValue()));
-            forecastDetails.add(forecastDetail);
+            WeatherForecastInfo forecastInfo = new WeatherForecastInfo();
+            forecastInfo.setHighTemp(String.valueOf(dailyForecasts.getTemperature().getMaximum().getValue()));
+            forecastInfo.setLowTemp(String.valueOf(dailyForecasts.getTemperature().getMinimum().getValue()));
+            weatherForecastInfoList.add(forecastInfo);
         }
-        weatherData.setForecastDetail(forecastDetails);
     }
 
-    private void getCurrentWeatherInfo(JSONArray curjsonArray, WeatherData weatherData) {
+    private void getCurrentWeatherInfo(JSONArray curjsonArray, WeatherInfo weatherData) {
         int arrayLen = curjsonArray.length();
         for (int i = 0; i < arrayLen; i++) {
             JSONObject object;
@@ -211,33 +207,26 @@ public class DownloadWeather {
         return newIcon;
     }
 
-    protected void getForecastWeatherInfo(JSONObject foreJsonObject, WeatherData weatherData) {
+    protected void getForecastWeatherInfo(JSONObject foreJsonObject, WeatherInfo weatherInfo) {
         JSONArray jsonArray;
+        List<WeatherForecastInfo> weatherForecastInfoList = weatherInfo.getForecastDetailList();
         try {
             jsonArray = foreJsonObject.getJSONArray(FORECAST_DAILY_FORECASTS);
             int arrayLen = jsonArray.length();
             arrayLen = arrayLen > 7 ? 7 : arrayLen;
-            forecastDetails.clear();
-            String DayOrNight = weatherData.isDaylight() ? FORECAST_DAY : FORECAST_NIGHT;
+            String DayOrNight = weatherInfo.isDaylight() ? FORECAST_DAY : FORECAST_NIGHT;
             for (int i = 0; i < arrayLen; i++) {
                 JSONObject object = jsonArray.getJSONObject(i);
                 String highTemp = String.valueOf(object.getJSONObject(TEMPERATURE).getJSONObject(HIGH_TEMPRATURE).getInt(VALUE));
                 String lowTemp = String.valueOf(object.getJSONObject(TEMPERATURE).getJSONObject(LOW_TEMPRATURE).getInt(VALUE));
 
-                if (i == 0) {
-                    weatherData.setSunrise(object.getJSONObject(SUN).getString(SUNRISE));
-                    weatherData.setSunset(object.getJSONObject(SUN).getString(SUNSET));
-                    weatherData.setHighTemp(highTemp);
-                    weatherData.setLowTemp(lowTemp);
-                } else {
-                    ForecastDetail forecastDetail = new ForecastDetail();
-                    forecastDetail.setHighTemp(highTemp);
-                    forecastDetail.setLowTemp(lowTemp);
-                    forecastDetail.setIcon(convertIcon(object.getJSONObject(DayOrNight).getInt(FORECAST_ICON)));
-                    forecastDetails.add(forecastDetail);
-                }
+                WeatherForecastInfo weatherForecastInfo = new WeatherForecastInfo();
+                weatherForecastInfo.setHighTemp(highTemp);
+                weatherForecastInfo.setLowTemp(lowTemp);
+                weatherForecastInfo.setIcon(convertIcon(object.getJSONObject(DayOrNight).getInt(FORECAST_ICON)));
+                weatherForecastInfoList.add(weatherForecastInfo);
             }
-            weatherData.setForecastDetail(forecastDetails);
+            weatherInfo.setForecastInfo(weatherForecastInfoList);
         } catch (JSONException e) {
             Log.v("wq", "getForecastWeatherInfo e=" + e.getMessage());
         }

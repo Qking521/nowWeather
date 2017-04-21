@@ -1,41 +1,45 @@
 package com.king.nowweather.data;
 
 
+import android.support.annotation.Nullable;
+
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 
+import static android.R.attr.format;
+import static android.text.TextUtils.isEmpty;
 import static com.king.nowweather.data.WeatherUtil.DAYLIGHT_TIME_END;
 import static com.king.nowweather.data.WeatherUtil.DAYLIGHT_TIME_START;
+import static com.king.nowweather.data.WeatherUtil.TEMP_COMMON_UNIT;
 
-public final class WeatherData extends Details implements Comparable<WeatherData> {
+public final class WeatherInfo extends Details{
 
 
-
-    private long id ;
+    private long id;
     //city info
     private String cityName = ""; // city name
     private String city = "";
     private String province = "";
     private String responseCityName = ""; // city name from server
     private String fullName = "";
-	private String postalCode = "";
+    private String postalCode = "";
     private String longitude = "";
     private String latitude = "";
     private String timeZone = "";
     private String curDate = "";
     private String location = "";
-	private String locationCity = "false";
+    private String locationCity = "false";
     private boolean notifyAlarm = false;
 
-    //update time
+    //weather info
+    private String curTemp = "";
     private long lastUpdateTime = 0;
     private String lastUpdateFormatTime = "";
 
     //forecast
-    private List<ForecastDetail> forecastDetail = new ArrayList<ForecastDetail>();
-
+    private List<WeatherForecastInfo> weatherForecastInfoList = new ArrayList<WeatherForecastInfo>();
 
     public long getId() {
         return id;
@@ -82,16 +86,16 @@ public final class WeatherData extends Details implements Comparable<WeatherData
             this.responseCityName = responseCityName;
         }
     }
-    
+
     public String getFullName() {
-		return fullName;
-	}
+        return fullName;
+    }
 
-	public void setFullName(String fullName) {
-		this.fullName = fullName;
-	}
+    public void setFullName(String fullName) {
+        this.fullName = fullName;
+    }
 
-//
+    //
     String getPostalCode() {
         return postalCode;
     }
@@ -103,14 +107,13 @@ public final class WeatherData extends Details implements Comparable<WeatherData
     }
 
 
-
     public String getLocation() {
-		return location;
-	}
+        return location;
+    }
 
-	public void setLocation(String location) {
-		this.location = location;
-	}
+    public void setLocation(String location) {
+        this.location = location;
+    }
 
 
     public String getLatitude() {
@@ -134,31 +137,26 @@ public final class WeatherData extends Details implements Comparable<WeatherData
         }
     }
 
-    public long lastRefreshed() {
-        return lastUpdateTime;
-    }
-
-
-    public String getLastUpdateTime() {
-        if (isEmpty(lastUpdateFormatTime)) {
-            lastUpdateFormatTime = getLastRefreshTime("yyyy/MM/dd HH:mm");
-        }
-        return lastUpdateFormatTime;
-    }
-
-
-    public String getLastRefreshTime(String format) {
-        if (format == null || "".equals(format)) {
-            format = "yyyy/MM/dd HH:mm";
-        }
-        SimpleDateFormat dateFormat = new SimpleDateFormat(format);
-        return dateFormat.format(lastUpdateTime);
-    }
-
     public void setLastUpdateTime(long lastUpdateTime) {
         this.lastUpdateTime = lastUpdateTime;
     }
 
+    public long getLastUpdateTime() {
+        return lastUpdateTime;
+    }
+
+    public  String getLastUpdateFormatTime() {
+        setLastUpdateFormatTime(null);
+        return lastUpdateFormatTime;
+    }
+
+    public void setLastUpdateFormatTime(@Nullable String format) {
+        if (format == null || "".equals(format)) {
+            format = "yyyy/MM/dd HH:mm";
+        }
+        SimpleDateFormat dateFormat = new SimpleDateFormat(format);
+        lastUpdateFormatTime = dateFormat.format(getLastUpdateTime());
+    }
 
     public String getCurrentDate() {
         return curDate;
@@ -179,10 +177,6 @@ public final class WeatherData extends Details implements Comparable<WeatherData
         cityInfo.setFullName(fullName);
         return cityInfo;
     }
-
-
-
-
 
     String getTimeZone() {
         return this.timeZone;
@@ -229,53 +223,57 @@ public final class WeatherData extends Details implements Comparable<WeatherData
     }
 
 
-    public List<ForecastDetail> getForecastDetailList() {
-        return forecastDetail;
+    public List<WeatherForecastInfo> getForecastDetailList() {
+        return weatherForecastInfoList;
     }
 
-    public void setForecastDetail(List<ForecastDetail> forecastDetail) {
-        if (forecastDetail != null) {
-            this.forecastDetail = forecastDetail;
+    public void setForecastInfo(List<WeatherForecastInfo> weatherForecastInfoList) {
+        if (weatherForecastInfoList != null) {
+            this.weatherForecastInfoList = weatherForecastInfoList;
         }
     }
 
-    @Override
-    public boolean equals(Object object) {
-        if (object == this) {
-            return true;
-        }
-        if (object instanceof WeatherData) {
-            WeatherData data = (WeatherData) object;
-            return this.cityName.equals(data.cityName);
-        }
-        return false;
-    }
-
-    @Override
-    public boolean isValid() {
-        return (!isEmpty(cityName) && super.isValid());
+    public String getCurTemp() {
+        return curTemp;
     }
 
 
-    public static class ForecastDetail extends Details {
-        private int orderId = 0;
-
-
-        int order() {
-            return orderId;
+    public String getCurTemp(String unit) {
+        if (isEmpty(unit)) {
+            unit = TEMP_COMMON_UNIT;
         }
+        return curTemp + unit;
+    }
 
-        void setOrderId(int orderId) {
-            this.orderId = orderId;
+    public void setCurTemp(String curTemp) {
+        if (curTemp != null) {
+            this.curTemp = curTemp;
         }
     }
 
-    @Override
-    public int compareTo(WeatherData another) {
-        return 0;
-    }
-
-    public void setLocatedCity(String locationCity) {
-        this.locationCity = locationCity;
+    public void setWeatherInfo(WeatherInfo weatherInfo) {
+        setCityName(weatherInfo.getCityName());
+        setLowTemp(weatherInfo.getLowTemp());
+        setHighTemp(weatherInfo.getHighTemp());
+        setCurrentDate(weatherInfo.getCurrentDate());
+        setCurTemp(weatherInfo.getCurTemp());
+        setFullName(weatherInfo.getFullName());
+        setLastUpdateTime(weatherInfo.getLastUpdateTime());
+        setLatitude(weatherInfo.getLatitude());
+        setLocation(weatherInfo.getLocation());
+        setLocationCity(weatherInfo.getLocationCity());
+        setLongitude(weatherInfo.getLongitude());
+        setNotifyAlarm(weatherInfo.isNotifyAlarm());
+        setPostalCode(weatherInfo.getPostalCode());
+        setResponseCityName(weatherInfo.getResponseCityName());
+        setTimeZone(weatherInfo.getTimeZone());
+        setCondition(weatherInfo.getCondition());
+        setIcon(weatherInfo.getIcon());
+        setRealfeel(weatherInfo.getRealfeel());
+        setTempUnit(weatherInfo.getTempUnit());
+        setWindDirection(weatherInfo.getWindDirection());
+        setWindPower(weatherInfo.getWindPower());
+        setWindVelocity(weatherInfo.getWindVelocity());
+        setWindVelocityUnit(weatherInfo.getWindVelocityUnit());
     }
 }

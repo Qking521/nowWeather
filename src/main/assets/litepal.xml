@@ -11,7 +11,7 @@
     	For example:
     	<dbname value="demo" />
     -->
-    <dbname value="demo" />
+    <dbname value="weather" />
 
     <!--
     	Define the version of your database. Each time you want
@@ -35,7 +35,8 @@
     	</list>
     -->
     <list>
-        <mapping class="com.king.nowweather.data.WeatherData" />
+        <mapping class="com.king.nowweather.data.WeatherInfo" />
+        <mapping class="com.king.nowweather.data.WeatherForecastInfo" />
     </list>
 
     <!--

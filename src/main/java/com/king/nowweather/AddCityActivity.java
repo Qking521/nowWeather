@@ -16,7 +16,9 @@ import android.widget.Toast;
 import com.king.nowweather.data.CityInfo;
 import com.king.nowweather.data.DownloadCity;
 import com.king.nowweather.data.DownloadWeather;
-import com.king.nowweather.data.WeatherData;
+import com.king.nowweather.data.WeatherForecastInfo;
+import com.king.nowweather.data.WeatherInfo;
+import com.king.nowweather.data.WeatherManager;
 
 import org.litepal.crud.DataSupport;
 
@@ -24,15 +26,13 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import static android.R.attr.id;
-
 public class AddCityActivity extends AppCompatActivity {
 
     private EditText mCityEditText;
     private Button mAddCityButton;
     private ListView mSearchResultListView;
 
-    private String mAddedCityName;
+    private String mSelectedCityName;
     private String cityName;
     private List<CityInfo> mCityInfoList;
     private List<String> mDisplayCityList = new ArrayList<>();
@@ -40,6 +40,7 @@ public class AddCityActivity extends AppCompatActivity {
     private DownloadCity mDownloadCity;
     private DownloadWeather mDownloadWeather;
     private ArrayAdapter<String> mSearchResultAdapter;
+    private WeatherManager mWeatherManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,7 +49,7 @@ public class AddCityActivity extends AppCompatActivity {
 
         mDownloadCity = new DownloadCity();
         mDownloadWeather = new DownloadWeather();
-
+        mWeatherManager = new WeatherManager();
         initViews();
         initData();
     }
@@ -64,7 +65,7 @@ public class AddCityActivity extends AppCompatActivity {
         mSearchResultListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                mAddedCityName = mCityInfoList.get(position).getCityName();
+                mSelectedCityName = mCityInfoList.get(position).getCityName();
                 mDownloadWeather.startDownloadWeather(Arrays.asList(mCityInfoList.get(position)), mDownLoadWeatherListener);
             }
         });
@@ -118,31 +119,70 @@ public class AddCityActivity extends AppCompatActivity {
         }
 
         @Override
-        public void onWeatherUpdatedSuccess(List<WeatherData> reqWeatherDataList) {
+        public void onWeatherUpdatedSuccess(List<WeatherInfo> reqWeatherDataList) {
             saveToDatabase(reqWeatherDataList);
+            finish();
         }
     };
 
-    private void saveToDatabase(List<WeatherData> reqWeatherDataList) {
-        //this here only one city result
-        long id = -1;
-        List<WeatherData> dbWeatherDataList = DataSupport.findAll(WeatherData.class);
-        for (WeatherData weatherData : dbWeatherDataList) {
-            if (weatherData.getCityName().equals(mAddedCityName)) {
-                id = weatherData.getId();
-            }
-        }
-        for (WeatherData weatherData : reqWeatherDataList) {
-            Log.v("wq", "saveToDatabase: "+ mAddedCityName + " ,weatherData="+ weatherData.getCityName() + " ,id="+ weatherData.getId());
-            if (weatherData.getCityName().equals(mAddedCityName)){
-                if (id > 0) {
-                    weatherData.update(id);
+    private void saveToDatabase(List<WeatherInfo> reqWeatherInfoList) {
+
+        //query all weather include bounded table
+        List<WeatherInfo> dbWeatherInfoList = DataSupport.findAll(WeatherInfo.class, true);
+        //this is only one city, so get the first one.
+        WeatherInfo reqWeatherInfo = reqWeatherInfoList.get(0);
+        //if database is empty, save directly. if not, need to judge whether to update.
+        if (dbWeatherInfoList.size() > 0) {
+            for (WeatherInfo dbWeatherInfo : dbWeatherInfoList) {
+                List<WeatherForecastInfo> reqWeatherForecastInfoList = reqWeatherInfo.getForecastDetailList();
+                List<WeatherForecastInfo> dbWeatherForecastInfoList = dbWeatherInfo.getForecastDetailList();
+                //if the city has been in database, update, if not , save.
+                if (dbWeatherInfo.getCityName().equals(mSelectedCityName)) {
+                    dbWeatherInfo.setWeatherInfo(reqWeatherInfo);
+                    dbWeatherInfo.update(dbWeatherInfo.getId());
+                    for (int i = 0; i < reqWeatherForecastInfoList.size(); i++) {
+                        WeatherForecastInfo dbWeatherForecastInfo = dbWeatherForecastInfoList.get(i);
+                        dbWeatherForecastInfo.setWeatherForecastInfo(reqWeatherForecastInfoList.get(i));
+                        dbWeatherForecastInfo.update(dbWeatherForecastInfo.getId());
+                    }
                 } else {
-                    weatherData.save();
+                    reqWeatherInfo.save();
+                    DataSupport.saveAll(reqWeatherForecastInfoList);
                 }
             }
+        } else {
+            reqWeatherInfo.save();
+            DataSupport.saveAll(reqWeatherInfo.getForecastDetailList());
         }
-        finish();
+//        long id = -1;
+//        long[] ids = new long[]{};
+//        List<WeatherInfo> dbWeatherInfoList = DataSupport.findAll(WeatherInfo.class, true);
+//        for (WeatherInfo weatherInfo : dbWeatherInfoList) {
+//            if (weatherInfo.getCityName().equals(mSelectedCityName)) {
+//                id = weatherInfo.getId();
+//                List<WeatherForecastInfo> dbWeatherForecastInfoList = weatherInfo.getForecastDetailList();
+//                for (int i = 0; i < dbWeatherForecastInfoList.size(); i++) {
+//                    ids[i] = dbWeatherForecastInfoList.get(i).getId();
+//                }
+//            }
+//        }
+//        //this here only one city result, so list get(0)
+//        WeatherInfo weatherInfo = reqWeatherInfoList.get(0);
+//        Log.v("wq", "isSaved=" + weatherInfo.isSaved());
+//        if (weatherInfo.getCityName().equals(mSelectedCityName)){
+//            List<WeatherForecastInfo> weatherForecastInfoList = weatherInfo.getForecastDetailList();
+//            if (id > -1) {
+//                weatherInfo.update(id);
+//                for (int i = 0; i < weatherForecastInfoList.size(); i++) {
+//                    WeatherForecastInfo weatherForecastInfo = weatherForecastInfoList.get(i);
+//                    weatherForecastInfo.update(ids[i]);
+//                }
+//            } else {
+//                weatherInfo.save();
+//                DataSupport.saveAll(weatherForecastInfoList);
+//            }
+//            Log.v("wq", "saveToDatabase: cityname"+ weatherInfo.getCityName() + " ,id="+ weatherInfo.getId());
+//        }
     }
 
 

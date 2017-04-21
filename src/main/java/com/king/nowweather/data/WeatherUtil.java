@@ -108,6 +108,45 @@ public final class WeatherUtil {
 		return String.valueOf(Math.round((double) temp * 9 / 5 + 32));
 	}
 
+    protected static String check(String string) {
+        return (string == null) ? "" : string;
+    }
+
+
+    protected static String convert(String string) {
+        if ("".equals(string)) {
+            return "N/A";
+        } else if (string == null) {
+            return "";
+        }
+        return string;
+    }
+
+
+    protected static String convert(String data, String unit) {
+        if ("".equals(data)) {
+            data = "N/A";
+        } else if (data == null) {
+            return "";
+        }
+        if (unit == null) {
+            unit = "";
+        }
+        return data + unit;
+    }
+
+
+    public static boolean isValid() {
+        return true;
+    }
+
+
+    public boolean isEmpty(String string) {
+        if (string == null || "NONE".equals(string) || "".equals(string) || "N/A".equals(string)) {
+            return true;
+        }
+        return false;
+    }
 
     public static void logV(String logInfo){
         logV("wq", logInfo);

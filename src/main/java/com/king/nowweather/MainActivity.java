@@ -2,8 +2,6 @@ package com.king.nowweather;
 
 import android.content.Intent;
 import android.support.design.widget.FloatingActionButton;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentTransaction;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.view.ViewPager;
 import android.support.v4.widget.DrawerLayout;
@@ -15,7 +13,8 @@ import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 
-import com.king.nowweather.data.WeatherData;
+import com.king.nowweather.data.WeatherInfo;
+import com.king.nowweather.data.WeatherManager;
 
 import org.litepal.crud.DataSupport;
 
@@ -26,22 +25,24 @@ public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = "wq";
     private List<MainFragment> mContentFragmentList = new ArrayList<>();
-    private List<WeatherData> mWeatherDataList = new ArrayList<>();
+    private List<WeatherInfo> mWeatherDataList = new ArrayList<>();
     private MainFragmentPagerAdapter mPagerAdapter;
 
     private ViewPager mViewPager;
     private DrawerLayout mDrawerLayout;
     private Toolbar mToolbar;
     private FloatingActionButton mAddCityButton;
+    private WeatherManager mWeatherManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        mWeatherDataList = DataSupport.findAll(WeatherData.class);
+        mWeatherDataList = DataSupport.findAll(WeatherInfo.class);
         if (mWeatherDataList.size() == 0) {
             goToAddCityActivity();
         }
         setContentView(R.layout.activity_main);
+        mWeatherManager = new WeatherManager();
         initViews();
 
     }
@@ -49,15 +50,12 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onStart() {
         super.onStart();
-        Log.v(TAG, "onStart: ");
         initData();
     }
 
     @Override
     protected void onRestart() {
         super.onRestart();
-
-        Log.v(TAG, "onRestart: ");
     }
 
     private void initViews() {
@@ -91,10 +89,9 @@ public class MainActivity extends AppCompatActivity {
         if (mContentFragmentList != null) {
             mContentFragmentList.clear();
         }
-        mWeatherDataList = DataSupport.findAll(WeatherData.class);
-        for (WeatherData weatherData : mWeatherDataList) {
-            Log.v(TAG, "initData: cityName="+ weatherData.getCityName() + " size="+ mWeatherDataList.size());
-            mContentFragmentList.add(MainFragment.newInstance("").setData(weatherData));
+        mWeatherDataList = mWeatherManager.findAll();
+        for (WeatherInfo weatherInfo : mWeatherDataList) {
+            mContentFragmentList.add(MainFragment.newInstance("").setData(weatherInfo));
 
         }
         mPagerAdapter = new MainFragmentPagerAdapter(this, getSupportFragmentManager(), mContentFragmentList);
