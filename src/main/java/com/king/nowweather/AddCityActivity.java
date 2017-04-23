@@ -132,12 +132,14 @@ public class AddCityActivity extends AppCompatActivity {
         //this is only one city, so get the first one.
         WeatherInfo reqWeatherInfo = reqWeatherInfoList.get(0);
         //if database is empty, save directly. if not, need to judge whether to update.
+        boolean isNeedUpdate = false;
         if (dbWeatherInfoList.size() > 0) {
             for (WeatherInfo dbWeatherInfo : dbWeatherInfoList) {
                 List<WeatherForecastInfo> reqWeatherForecastInfoList = reqWeatherInfo.getForecastDetailList();
                 List<WeatherForecastInfo> dbWeatherForecastInfoList = dbWeatherInfo.getForecastDetailList();
                 //if the city has been in database, update, if not , save.
                 if (dbWeatherInfo.getCityName().equals(mSelectedCityName)) {
+                    isNeedUpdate = true;
                     dbWeatherInfo.setWeatherInfo(reqWeatherInfo);
                     dbWeatherInfo.update(dbWeatherInfo.getId());
                     for (int i = 0; i < reqWeatherForecastInfoList.size(); i++) {
@@ -145,10 +147,11 @@ public class AddCityActivity extends AppCompatActivity {
                         dbWeatherForecastInfo.setWeatherForecastInfo(reqWeatherForecastInfoList.get(i));
                         dbWeatherForecastInfo.update(dbWeatherForecastInfo.getId());
                     }
-                } else {
-                    reqWeatherInfo.save();
-                    DataSupport.saveAll(reqWeatherForecastInfoList);
                 }
+            }
+            if (!isNeedUpdate) {
+                reqWeatherInfo.save();
+                DataSupport.saveAll(reqWeatherInfo.getForecastDetailList());
             }
         } else {
             reqWeatherInfo.save();

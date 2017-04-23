@@ -76,18 +76,19 @@ public final class WeatherUtil {
         public static final String KEY_NOTICE_CITY_EN = "notice_city_en";
     }
 
-
-    public static boolean isChinese() {
-        return Locale.CHINA.getCountry().equals(Locale.getDefault().getCountry());
+    public static String getCountryCode(){
+        String countryCode = Locale.getDefault().getCountry();
+        return countryCode;
     }
 
+    public static String getLanguage(){
+        String language = Locale.getDefault().getLanguage() + "-" + getCountryCode().toLowerCase();
+        return language;
+    }
 
-    public static String getDBName() {
-        String dbName = "weatherdata_en.db";
-        if (isChinese()) {
-            dbName = "weatherdata_zh.db";
-        }
-        return dbName;
+    public static boolean isChinese() {
+
+        return Locale.CHINA.getCountry().equals(Locale.getDefault().getCountry());
     }
 
 
