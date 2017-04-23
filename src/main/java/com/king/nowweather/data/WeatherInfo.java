@@ -20,13 +20,13 @@ public final class WeatherInfo extends Details{
     private long id;
     //city info
     private String cityName = ""; // city name
-    private String city = "";
+    private String cityKey = "";
     private String province = "";
-    private String responseCityName = ""; // city name from server
-    private String fullName = "";
-    private String postalCode = "";
+    private String country = "";
     private String longitude = "";
     private String latitude = "";
+
+    private String postalCode = "";
     private String timeZone = "";
     private String curDate = "";
     private String location = "";
@@ -53,48 +53,21 @@ public final class WeatherInfo extends Details{
         return cityName;
     }
 
-
-    public String getCity() {
-        return city;
-    }
-
-
     public String getProvince() {
         return province;
     }
 
     public void setCityName(String cityName) {
-        if (cityName != null) {
-            this.cityName = cityName;
-            String[] name = cityName.split(",");
-            if (name != null && name.length >= 2) {
-                city = name[0];
-                province = name[1];
-            } else {
-                city = cityName;
-            }
-        }
+        this.cityName = cityName;
     }
 
-
-    public String getResponseCityName() {
-        return responseCityName;
+    public String getCityKey() {
+        return cityKey;
     }
 
-    public void setResponseCityName(String responseCityName) {
-        if (responseCityName != null) {
-            this.responseCityName = responseCityName;
-        }
+    public void setCityKey(String cityKey) {
+        this.cityKey = cityKey;
     }
-
-    public String getFullName() {
-        return fullName;
-    }
-
-    public void setFullName(String fullName) {
-        this.fullName = fullName;
-    }
-
     //
     String getPostalCode() {
         return postalCode;
@@ -106,6 +79,25 @@ public final class WeatherInfo extends Details{
         }
     }
 
+    public void setProvince(String province) {
+        this.province = province;
+    }
+
+    public String getCountry() {
+        return country;
+    }
+
+    public void setCountry(String country) {
+        this.country = country;
+    }
+
+    public String getCurDate() {
+        return curDate;
+    }
+
+    public void setCurDate(String curDate) {
+        this.curDate = curDate;
+    }
 
     public String getLocation() {
         return location;
@@ -158,23 +150,12 @@ public final class WeatherInfo extends Details{
         lastUpdateFormatTime = dateFormat.format(getLastUpdateTime());
     }
 
-    public String getCurrentDate() {
-        return curDate;
-    }
-
-    public void setCurrentDate(String curDate) {
-        if (curDate != null) {
-            this.curDate = curDate;
-        }
-    }
-
     public CityInfo createCityInfo() {
         CityInfo cityInfo = new CityInfo();
         cityInfo.setCityKey(location);
         cityInfo.setCityName(cityName);
         cityInfo.setLatitude(latitude);
         cityInfo.setLongitude(longitude);
-        cityInfo.setFullName(fullName);
         return cityInfo;
     }
 
@@ -251,13 +232,31 @@ public final class WeatherInfo extends Details{
         }
     }
 
+    public CityInfo getCityInfo() {
+        CityInfo cityInfo = new CityInfo();
+        cityInfo.setCityKey(getCityKey());
+        cityInfo.setCityName(getCityName());
+        cityInfo.setProvince(getProvince());
+        cityInfo.setCountry(getCountry());
+        cityInfo.setLatitude(getLatitude());
+        cityInfo.setLongitude(getLongitude());
+        return cityInfo;
+    }
+
+    public void setCityInfo(CityInfo cityInfo) {
+        setCityKey(cityInfo.getCityKey());
+        setCityName(cityInfo.getCityName());
+        setProvince(cityInfo.getProvince());
+        setCountry(cityInfo.getCountry());
+        setLatitude(cityInfo.getLatitude());
+        setLongitude(cityInfo.getLongitude());
+    }
+
     public void setWeatherInfo(WeatherInfo weatherInfo) {
         setCityName(weatherInfo.getCityName());
         setLowTemp(weatherInfo.getLowTemp());
         setHighTemp(weatherInfo.getHighTemp());
-        setCurrentDate(weatherInfo.getCurrentDate());
         setCurTemp(weatherInfo.getCurTemp());
-        setFullName(weatherInfo.getFullName());
         setLastUpdateTime(weatherInfo.getLastUpdateTime());
         setLatitude(weatherInfo.getLatitude());
         setLocation(weatherInfo.getLocation());
@@ -265,7 +264,6 @@ public final class WeatherInfo extends Details{
         setLongitude(weatherInfo.getLongitude());
         setNotifyAlarm(weatherInfo.isNotifyAlarm());
         setPostalCode(weatherInfo.getPostalCode());
-        setResponseCityName(weatherInfo.getResponseCityName());
         setTimeZone(weatherInfo.getTimeZone());
         setCondition(weatherInfo.getCondition());
         setIcon(weatherInfo.getIcon());

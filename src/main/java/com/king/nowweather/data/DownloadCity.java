@@ -99,7 +99,6 @@ public class DownloadCity {
 			cityInfo.setLatitude(String.valueOf(jObject.getJSONObject(GEOPOSITION).getInt(LATITUE)));
 			cityInfo.setLongitude(String.valueOf(jObject.getJSONObject(GEOPOSITION).getInt(LONGITUDE)));
 			cityInfo.setProvince(jObject.getJSONObject(PROVINCE).getString(PROVINCE_NAME));
-			cityInfo.setFullName(cityInfo.getProvince() + ", " + cityInfo.getCountry()); 
 			mCityInfos.add(cityInfo);
 		}
 	}
@@ -126,11 +125,10 @@ public class DownloadCity {
             CityInfo cityInfo = new CityInfo();
             cityInfo.setCityKey(cityInfoMeta.getKey());
             cityInfo.setCityName(cityInfoMeta.getLocalizedName());
+            cityInfo.setProvince(cityInfoMeta.getAdministrativeArea().getLocalizedName());
             cityInfo.setCountry(cityInfoMeta.getCountry().getLocalizedName());
             cityInfo.setLatitude(String.valueOf(cityInfoMeta.getGeoPosition().getLatitude()));
             cityInfo.setLongitude(String.valueOf(cityInfoMeta.getGeoPosition().getLongitude()));
-            cityInfo.setProvince(cityInfoMeta.getAdministrativeArea().getLocalizedName());
-            cityInfo.setFullName(cityInfo.getProvince() + ", " + cityInfo.getCountry());
             Log.v("wq", "parseCityInfoFromJson: cityInfo="+ cityInfo.toString());
             mCityInfos.add(cityInfo);
         }

@@ -18,6 +18,8 @@ import java.util.List;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
+import static com.king.nowweather.data.WeatherUtil.convertIcon;
+
 public class DownloadWeather {
 
     private static final String TAG = "wq";
@@ -106,28 +108,22 @@ public class DownloadWeather {
         ;
     };
 
-    private void downloadWeatherInfo(final CityInfo cityInfo, final WeatherInfo weatherData) {
+    private void downloadWeatherInfo(final CityInfo cityInfo, final WeatherInfo weatherInfo) {
         new Thread(new Runnable() {
             public void run() {
                 try {
-                    weatherData.setCityName(cityInfo.getCityName());
-                    weatherData.setResponseCityName(cityInfo.getCityName() + ", " + cityInfo.getFullName());
-                    weatherData.setLocation(cityInfo.getCityKey());
-                    weatherData.setLatitude(cityInfo.getLatitude());
-                    weatherData.setLongitude(cityInfo.getLongitude());
-                    weatherData.setFullName(cityInfo.getFullName());
-
+                    weatherInfo.setCityInfo(cityInfo);
 //                    JSONArray curjsonArray = getJsonArrayFromUrl(getWeatherDataQueryUrl(cityInfo.getCityKey(), BASE_CUR_URI));
 //                    getCurrentWeatherInfo(curjsonArray, weatherData);
                     String curWeatherJsonString = getJsonStringFromUrl(getWeatherDataQueryUrl(cityInfo.getCityKey(), BASE_CUR_URI));
-                    parseCurrentWeatherInfo(curWeatherJsonString, weatherData);
+                    parseCurrentWeatherInfo(curWeatherJsonString, weatherInfo);
 
 //                    JSONObject foreJsonObject = getJsonObjectFromUrl(getWeatherDataQueryUrl(cityInfo.getCityKey(), BASE_FORE_URI));
 //                    getForecastWeatherInfo(foreJsonObject, weatherData);
                     String foreWeatherJsonString = getJsonStringFromUrl(getWeatherDataQueryUrl(cityInfo.getCityKey(), BASE_FORE_URI));
-                    parseForecastWeatherInfo(foreWeatherJsonString, weatherData);
+                    parseForecastWeatherInfo(foreWeatherJsonString, weatherInfo);
 
-                    handler.sendMessage(handler.obtainMessage(1, weatherData));
+                    handler.sendMessage(handler.obtainMessage(1, weatherInfo));
                 } catch (Exception e) {
                     Log.v("wq", "downloadWeatherInfo e=" + e.getMessage());
                 }
@@ -161,6 +157,8 @@ public class DownloadWeather {
                 }.getType());
         for (WeatherInfoMeta weatherInfoMeta : weatherInfoMetaList) {
             weatherData.setCurTemp(String.valueOf(weatherInfoMeta.getTemperature().getMetric().getValue()));
+            weatherData.setLowTemp(String.valueOf(weatherInfoMeta.getTemperature().getMetric().getValue()));
+            weatherData.setHighTemp(String.valueOf(weatherInfoMeta.getTemperature().getMetric().getValue()));
             weatherData.setCondition(weatherInfoMeta.getWeatherText());
             weatherData.setIcon(convertIcon(weatherInfoMeta.getWeatherIcon()));
             weatherData.setRealfeel(String.valueOf(weatherInfoMeta.getRealFeelTemperature().getMetric().getValue()));
@@ -197,15 +195,7 @@ public class DownloadWeather {
         }
     }
 
-    private String convertIcon(int icon) {
-        String newIcon = "";
-        if (icon >= 0 && icon <= 9) {
-            newIcon = "_0".concat(String.valueOf(icon)).concat("_");
-        } else {
-            newIcon = "_".concat(String.valueOf(icon)).concat("_");
-        }
-        return newIcon;
-    }
+
 
     protected void getForecastWeatherInfo(JSONObject foreJsonObject, WeatherInfo weatherInfo) {
         JSONArray jsonArray;

@@ -25,7 +25,6 @@ public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = "wq";
     private List<MainFragment> mContentFragmentList = new ArrayList<>();
-    private List<WeatherInfo> mWeatherDataList = new ArrayList<>();
     private MainFragmentPagerAdapter mPagerAdapter;
 
     private ViewPager mViewPager;
@@ -37,8 +36,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        mWeatherDataList = DataSupport.findAll(WeatherInfo.class);
-        if (mWeatherDataList.size() == 0) {
+        if (DataSupport.findAll(WeatherInfo.class).size() == 0) {
             goToAddCityActivity();
         }
         setContentView(R.layout.activity_main);
@@ -83,18 +81,10 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void initData() {
-        if (mWeatherDataList != null) {
-            mWeatherDataList.clear();
-        }
         if (mContentFragmentList != null) {
             mContentFragmentList.clear();
         }
-        mWeatherDataList = mWeatherManager.findAll();
-        for (WeatherInfo weatherInfo : mWeatherDataList) {
-            mContentFragmentList.add(MainFragment.newInstance("").setData(weatherInfo));
-
-        }
-        mPagerAdapter = new MainFragmentPagerAdapter(this, getSupportFragmentManager(), mContentFragmentList);
+        mPagerAdapter = new MainFragmentPagerAdapter(this, getSupportFragmentManager());
         mViewPager.setAdapter(mPagerAdapter);
 
     }
@@ -110,5 +100,9 @@ public class MainActivity extends AppCompatActivity {
 
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    public MainFragmentPagerAdapter getFragmentPagerAdapter(){
+        return mPagerAdapter;
     }
 }

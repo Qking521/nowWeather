@@ -6,7 +6,6 @@ public class CityInfo {
 	String latitude = "";
 	String longitude = "";
 	String province = "";
-	String fullName = "";
 	
 	public String getProvince() {
 		return province;
@@ -16,12 +15,6 @@ public class CityInfo {
 	}
 	public String getCountry() {
 		return country;
-	}
-	public String getFullName() {
-		return fullName;
-	}
-	public void setFullName(String fullName) {
-		this.fullName = fullName;
 	}
 	public void setCountry(String country) {
 		this.country = country;
@@ -54,7 +47,7 @@ public class CityInfo {
 	@Override
 	public String toString() {
 		return "citykey="+ cityKey + " ,cityName="+ cityName + " ,country="+ country+ " ,province="+
-				province + " ,fullName="+ fullName + " ,latitude="+ latitude + " ,longitude="+
+				province + " ,latitude="+ latitude + " ,longitude="+
 				longitude;
 	}
 }

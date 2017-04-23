@@ -147,6 +147,15 @@ public final class WeatherUtil {
         }
         return false;
     }
+    public static String convertIcon(int icon) {
+        String newIcon = "";
+        if (icon >= 0 && icon <= 9) {
+            newIcon = "_0".concat(String.valueOf(icon)).concat("_");
+        } else {
+            newIcon = "_".concat(String.valueOf(icon)).concat("_");
+        }
+        return newIcon;
+    }
 
     public static void logV(String logInfo){
         logV("wq", logInfo);
