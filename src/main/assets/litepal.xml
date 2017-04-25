@@ -35,8 +35,8 @@
     	</list>
     -->
     <list>
-        <mapping class="com.king.nowweather.data.WeatherInfo" />
-        <mapping class="com.king.nowweather.data.WeatherForecastInfo" />
+        <mapping class="com.king.weather.data.WeatherInfo" />
+        <mapping class="com.king.weather.data.WeatherForecastInfo" />
     </list>
 
     <!--

@@ -1,4 +1,7 @@
 <resources>
     <string name="app_name">NowWeather</string>
     <string name="hint_input_city">input city name</string>
+    <string name="location">location</string>
+    <string name="permission_rational_title">Permission Rationale</string>
+    <string name="permission_rational_message">"It's must"</string>
 </resources>

@@ -5,7 +5,7 @@
     android:id="@+id/main_drawer_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="com.king.nowweather.MainActivity">
+    tools:context="com.king.weather.MainActivity">
 
 
     <android.support.design.widget.CoordinatorLayout
@@ -24,7 +24,10 @@
             android:id="@+id/main_toolbar"
             android:layout_width="match_parent"
             android:layout_height="?android:attr/actionBarSize"
-            app:title="@string/app_name" />
+            app:title="@string/app_name" >
+            <include layout="@layout/custom_main_tooltbar" />
+
+        </android.support.v7.widget.Toolbar>
 
         <android.support.design.widget.FloatingActionButton
             android:id="@+id/main_add_city_button"
