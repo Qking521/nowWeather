@@ -10,7 +10,6 @@ import com.king.weather.data.WeatherInfo;
 
 import org.litepal.crud.DataSupport;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -20,25 +19,20 @@ import java.util.List;
 public class MainFragmentPagerAdapter extends FragmentStatePagerAdapter {
 
     private Context mContext;
-    private List<MainFragment> mMainFragmentList = new ArrayList<>();
+    List<WeatherInfo> mWeatherInfoList;
 
     public MainFragmentPagerAdapter(Context context, FragmentManager fragmentManager){
         super(fragmentManager);
         mContext = context;
-        createFragments();
-    }
-
-    private void createFragments(){
-        mMainFragmentList.clear();
-        List<WeatherInfo> weatherInfoList = DataSupport.findAll(WeatherInfo.class, true);
-        for (WeatherInfo weatherInfo : weatherInfoList) {
-            mMainFragmentList.add(MainFragment.newInstance(weatherInfo.getId()).setData(weatherInfo));
-        }
+        mWeatherInfoList = DataSupport.findAll(WeatherInfo.class, true);
     }
 
     @Override
     public Fragment getItem(int position) {
-        return mMainFragmentList.get(position);
+        WeatherInfo weatherInfo = mWeatherInfoList.get(position);
+        MainFragment fragment = MainFragment.newInstance(weatherInfo.getId());
+        fragment.setData(weatherInfo);
+        return fragment;
     }
 
     //override this method to let notifyDataSetChanged enable
@@ -53,12 +47,14 @@ public class MainFragmentPagerAdapter extends FragmentStatePagerAdapter {
 
     @Override
     public int getCount() {
-        return mMainFragmentList.size();
+        return mWeatherInfoList.size();
     }
 
     @Override
     public Object instantiateItem(ViewGroup container, int position) {
-        return super.instantiateItem(container, position);
+        MainFragment fragment = (MainFragment)super.instantiateItem(container, position);
+        fragment.setData(mWeatherInfoList.get(position));
+        return fragment;
     }
 
     @Override

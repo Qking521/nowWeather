@@ -4,4 +4,7 @@
     <string name="location">location</string>
     <string name="permission_rational_title">Permission Rationale</string>
     <string name="permission_rational_message">"It's must"</string>
+    <string name="tips_delete_city">Are you sure delete?</string>
+    <string name="snack_action_delete">delete</string>
+    <string name="add_city_empty">No result</string>
 </resources>

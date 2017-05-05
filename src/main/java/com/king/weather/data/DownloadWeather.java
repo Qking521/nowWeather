@@ -152,7 +152,6 @@ public class DownloadWeather {
             weatherInfo.setLowTemp(String.valueOf(weatherInfoMeta.getTemperature().getMetric().getValue()));
             weatherInfo.setHighTemp(String.valueOf(weatherInfoMeta.getTemperature().getMetric().getValue()));
             weatherInfo.setCondition(weatherInfoMeta.getWeatherText());
-            Log.v(TAG, "parseCurrentWeatherInfo: convertIcon(weatherInfoMeta.getWeatherIcon())");
             weatherInfo.setIcon(convertIcon(weatherInfoMeta.getWeatherIcon()));
             weatherInfo.setRealfeel(String.valueOf(weatherInfoMeta.getRealFeelTemperature().getMetric().getValue()));
             weatherInfo.setLastUpdateTime(System.currentTimeMillis());

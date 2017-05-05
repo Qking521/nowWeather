@@ -53,7 +53,6 @@ public class AddCityActivity extends AppCompatActivity {
     private DownloadWeather mDownloadWeather;
     private InputMethodManager mInputMethodManager;
     private ResultCityAdapter mResultCityAdapter;
-    private LocationManager mLocationManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -62,7 +61,6 @@ public class AddCityActivity extends AppCompatActivity {
         mDownloadCity = new DownloadCity();
         mDownloadWeather = new DownloadWeather();
         mInputMethodManager = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-        mLocationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
         initViews();
         initData();
     }
@@ -169,10 +167,11 @@ public class AddCityActivity extends AppCompatActivity {
     private DownloadCity.DownLoadCityListener mDownLoadCityListener = new DownloadCity.DownLoadCityListener() {
         @Override
         public void onCityDownLoadResult(ArrayList<CityInfo> cityInfoList) {
-            Log.v("wq", "onCityDownLoadResult: cityInfoList size="+ cityInfoList.size());
+
             if (mCityInfoList != null) mCityInfoList.clear();
             mCityInfoList.addAll(cityInfoList);
             mResultCityAdapter.notifyDataSetChanged();
+
         }
     };
 
@@ -228,11 +227,13 @@ public class AddCityActivity extends AppCompatActivity {
         private List<CityInfo> cityInfoList;
         private Context context;
         private LayoutInflater layoutInflater;
+
         public ResultCityAdapter(Context context, List<CityInfo> cityInfoList) {
             this.context = context;
             this.cityInfoList = cityInfoList;
             layoutInflater = LayoutInflater.from(context);
         }
+
         @Override
         public int getCount() {
             return cityInfoList.size();
@@ -255,7 +256,7 @@ public class AddCityActivity extends AppCompatActivity {
                 convertView = layoutInflater.inflate(android.R.layout.simple_list_item_1, null);
             }
             TextView textView = (TextView) convertView.findViewById(android.R.id.text1);
-            textView.setText(cityInfo.getCityName());
+            textView.setText(cityInfo.getCityName() + " " + cityInfo.getProvince() + "," + cityInfo.getCountry());
             return convertView;
         }
     }
