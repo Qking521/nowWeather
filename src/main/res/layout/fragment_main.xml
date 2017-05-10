@@ -9,7 +9,7 @@
         android:layout_height="match_parent"
         android:paddingTop="?android:attr/actionBarSize">
 
-        <include layout="@layout/fragment_main_city" />
+        <include layout="@layout/fragment_main_current" />
     </ScrollView>
 
 </android.support.v4.widget.SwipeRefreshLayout>

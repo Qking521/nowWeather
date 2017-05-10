@@ -10,6 +10,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -35,9 +36,6 @@ public class MainFragment extends Fragment {
     private WeatherInfo mWeatherInfo = new WeatherInfo();
 
     private SwipeRefreshLayout mRefreshLayout;
-    private TextView mWeatherCondition;
-    private TextView mCurTemp;
-    private ImageView mWeatherIcon;
 
     public static MainFragment newInstance(long id) {
         MainFragment fragment = new MainFragment();
@@ -55,19 +53,14 @@ public class MainFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_main, container, false);
-        initViews(view);
-        initViewsEvents();
-        updateViews(mWeatherInfo);
+
         return view;
     }
 
-    private void initViews(View view) {
-        mWeatherCondition = (TextView) view.findViewById(R.id.condition);
-        mCurTemp = (TextView) view.findViewById(R.id.cur_temp);
-        mWeatherIcon = (ImageView) view.findViewById(R.id.weather_icon);
-        mRefreshLayout = (SwipeRefreshLayout) view.findViewById(R.id.refresh_layout);
-
-
+    @Override
+    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+        updateViews(mWeatherInfo);
     }
 
     private void initViewsEvents() {
@@ -87,9 +80,40 @@ public class MainFragment extends Fragment {
         if (weatherInfo == null) {
             return;
         }
-        mCurTemp.setText(weatherInfo.getCurTemp() + "\n"+ weatherInfo.getLastUpdateFormatTime());
-        mWeatherCondition.setText(weatherInfo.getCondition());
-        mWeatherIcon.setImageResource(WeatherUtil.getDrawable(getContext(), weatherInfo.getIcon()));
+        View view = getView();
+        TextView weatherCondition = (TextView) view.findViewById(R.id.condition);
+        TextView curTemp = (TextView) view.findViewById(R.id.cur_temp);
+        ImageView weatherIcon = (ImageView) view.findViewById(R.id.weather_icon);
+        mRefreshLayout = (SwipeRefreshLayout) view.findViewById(R.id.refresh_layout);
+
+
+        initViewsEvents();
+        curTemp.setText(weatherInfo.getCurTemp() + "\n"+ weatherInfo.getLastUpdateFormatTime());
+        weatherCondition.setText(weatherInfo.getCondition());
+        weatherIcon.setImageResource(WeatherUtil.getDrawable(getContext(), weatherInfo.getIcon()));
+        addForecastViews(view, weatherInfo);
+    }
+
+    private void addForecastViews(View view, WeatherInfo weatherInfo) {
+        ViewGroup forecastContainer = (LinearLayout) view.findViewById(R.id.forecast_container);
+        List<WeatherForecastInfo> forecastInfoList = weatherInfo.getForecastDetailList();
+        for (WeatherForecastInfo weatherForecastInfo : forecastInfoList) {
+            View forecastView = LayoutInflater.from(getContext()).inflate(R.layout.fragment_main_forecast, null);
+            TextView forecastDate = (TextView) forecastView.findViewById(R.id.forecast_date);
+            TextView forecastCondition = (TextView) forecastView.findViewById(R.id.forecast_condition);
+            TextView forecastLowTemp = (TextView) forecastView.findViewById(R.id.forecast_low_temp);
+            TextView forecastHighTemp = (TextView) forecastView.findViewById(R.id.forecast_high_temp);
+            ImageView forecastIcon = (ImageView) forecastView.findViewById(R.id.forecast_icon);
+
+
+            forecastIcon.setImageResource(WeatherUtil.getDrawable(getContext(), weatherForecastInfo.getIcon()));
+            forecastCondition.setText(weatherForecastInfo.getCondition());
+            forecastDate.setText(WeatherUtil.toWeek(weatherForecastInfo.getDate()));
+            forecastLowTemp.setText(weatherForecastInfo.getLowTemp());
+            forecastHighTemp.setText(weatherForecastInfo.getHighTemp());
+            forecastContainer.addView(forecastView);
+        }
+
     }
 
     private void updateWeatherData() {

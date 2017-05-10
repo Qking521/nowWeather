@@ -1,6 +1,10 @@
 package com.king.weather.data;
 
+import android.icu.util.Calendar;
+
 import org.litepal.crud.DataSupport;
+
+import java.text.SimpleDateFormat;
 
 import static android.text.TextUtils.isEmpty;
 import static com.king.weather.data.WeatherUtil.TEMP_COMMON_UNIT;
@@ -14,6 +18,7 @@ public class Details extends DataSupport {
     private String realfeel = ""; //that is personal feeling
     private String icon = "";
     private String condition = "";
+
     //wind
     private String windVelocity = "";
     private String velocityUnit = "";
@@ -144,8 +149,6 @@ public class Details extends DataSupport {
     public void setCondition(String condition) {
         this.condition = condition;
     }
-
-
 
     public String getRealfeel() {
         return realfeel;

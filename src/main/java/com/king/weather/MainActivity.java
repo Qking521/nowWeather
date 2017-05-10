@@ -2,7 +2,9 @@ package com.king.weather;
 
 import android.content.Intent;
 import android.graphics.Color;
+import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
+import android.support.design.widget.NavigationView;
 import android.support.design.widget.Snackbar;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.view.ViewPager;
@@ -11,6 +13,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -35,6 +38,7 @@ public class MainActivity extends AppCompatActivity {
     private ImageView mToolbarSlide;
     private FloatingActionButton mAddCityButton;
     private ImageView mDeleteCityButton;
+    private NavigationView mNavigationView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -46,7 +50,10 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         getWindow().setStatusBarColor(getResources().getColor(android.R.color.transparent));
         initViews();
-        initData();
+        if (mCityCount > 0) {
+            initData();
+        }
+
 
     }
 
@@ -65,6 +72,7 @@ public class MainActivity extends AppCompatActivity {
         mToolbarTitle = (TextView) mToolbar.findViewById(R.id.main_title);
         mToolbarSubtitle = (TextView) mToolbar.findViewById(R.id.main_subtitle);
         mToolbarSlide = (ImageView) mToolbar.findViewById(R.id.main_slide);
+        mNavigationView = (NavigationView) findViewById(R.id.main_navigation);
     }
 
     private void showDeleteView() {
@@ -111,6 +119,17 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 goToAddCityActivity();
+            }
+        });
+        mNavigationView.setNavigationItemSelectedListener(new NavigationView.OnNavigationItemSelectedListener() {
+            @Override
+            public boolean onNavigationItemSelected(@NonNull MenuItem item) {
+                int menuId = item.getItemId();
+                switch (menuId) {
+                    case R.id.menu_app_recommend:
+                        startActivity(new Intent(MainActivity.this, AppRecommendActivity.class));
+                }
+                return true;
             }
         });
 

@@ -166,6 +166,9 @@ public class DownloadWeather {
             WeatherForecastInfo forecastInfo = new WeatherForecastInfo();
             forecastInfo.setHighTemp(String.valueOf(dailyForecasts.getTemperature().getMaximum().getValue()));
             forecastInfo.setLowTemp(String.valueOf(dailyForecasts.getTemperature().getMinimum().getValue()));
+            forecastInfo.setCondition(dailyForecasts.getDay().getLongPhrase());
+            forecastInfo.setDate(dailyForecasts.getEpochDate());
+            forecastInfo.setIcon(convertIcon(dailyForecasts.getDay().getIcon()));
             weatherForecastInfoList.add(forecastInfo);
         }
     }

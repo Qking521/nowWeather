@@ -37,6 +37,7 @@
             </intent-filter>
         </activity>
         <activity android:name=".AddCityActivity"></activity>
+        <activity android:name=".AppRecommendActivity"></activity>
         <service android:name="com.baidu.location.f" android:enabled="true" android:process=":remote">
         </service>
     </application>

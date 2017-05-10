@@ -35,7 +35,7 @@ public final class WeatherInfo extends Details{
     //weather info
     private String curTemp = "";
     private long lastUpdateTime = 0;
-    private String lastUpdateFormatTime = "";
+    public String lastUpdateFormatTime = "";
 
     //forecast
     private List<WeatherForecastInfo> weatherForecastInfoList = new ArrayList<WeatherForecastInfo>();

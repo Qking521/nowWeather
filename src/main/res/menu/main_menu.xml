@@ -4,4 +4,8 @@
         android:icon="@mipmap/ic_launcher_round"
         android:title="@string/app_name"/>
 
+    <item android:id="@+id/menu_app_recommend"
+        android:icon="@mipmap/ic_launcher_round"
+        android:title="@string/menu_app_recommend" />
+
 </menu>

@@ -2,6 +2,7 @@ package com.king.weather.data;
 
 import android.content.Context;
 import android.content.res.TypedArray;
+import android.icu.util.Calendar;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Environment;
@@ -10,6 +11,8 @@ import android.util.Log;
 import com.king.weather.R;
 
 import java.util.Locale;
+
+import static android.media.CamcorderProfile.get;
 
 public final class WeatherUtil {
 
@@ -114,8 +117,6 @@ public final class WeatherUtil {
         return Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState());
     }
 
-    public static final String NO_CHINISE_CITY = "no_chinise_city";
-    
     public static String getFTmep(int temp) {
 		return String.valueOf(Math.round((double) temp * 9 / 5 + 32));
 	}
@@ -175,5 +176,23 @@ public final class WeatherUtil {
 
     public static void logV(String tag, String logInfo){
         Log.v(tag, logInfo);
+    }
+
+    //because time is epoch time, so need * 1000;
+    public static String toWeek(long time){
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTimeInMillis(time * 1000);
+        int Week = calendar.get(Calendar.DAY_OF_WEEK);
+        String dayOfWeek = "";
+        switch (Week) {
+            case 1: dayOfWeek = "Monday"; break;
+            case 2: dayOfWeek = "Tuesday"; break;
+            case 3: dayOfWeek = "Wednesday"; break;
+            case 4: dayOfWeek = "Thursday"; break;
+            case 5: dayOfWeek = "Friday"; break;
+            case 6: dayOfWeek = "Saturday"; break;
+            case 7: dayOfWeek = "Sunday"; break;
+        }
+        return dayOfWeek;
     }
 }

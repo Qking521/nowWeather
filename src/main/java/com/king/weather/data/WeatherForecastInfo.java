@@ -1,5 +1,7 @@
 package com.king.weather.data;
 
+import java.text.SimpleDateFormat;
+
 /**
  * Created by wangqiang on 2017/4/20.
  */
@@ -7,7 +9,7 @@ package com.king.weather.data;
 public class WeatherForecastInfo extends Details {
 
     private long id = -1;//primary key
-    private WeatherInfo weatherInfo;
+    private WeatherInfo weatherInfo; //weatherInfo out key
     private String chill = "";
     private String humidity = "";
     private String visibility = "";
@@ -15,6 +17,7 @@ public class WeatherForecastInfo extends Details {
     private String rising = "";
     private String sunrise = "";
     private String sunset = "";
+    private int date;
 
     public long getId() {
         return id;
@@ -22,14 +25,6 @@ public class WeatherForecastInfo extends Details {
 
     public void setId(long id) {
         this.id = id;
-    }
-
-    public WeatherInfo getWeatherInfo() {
-        return weatherInfo;
-    }
-
-    public void setWeatherInfo(WeatherInfo weatherInfo) {
-        this.weatherInfo = weatherInfo;
     }
 
     public String getChill() {
@@ -88,6 +83,15 @@ public class WeatherForecastInfo extends Details {
         this.sunset = sunset;
     }
 
+    //eg: monday, tuesday
+    public int getDate() {
+        return date;
+    }
+
+    public void setDate(int date) {
+        this.date = date;
+    }
+
     public void setWeatherForecastInfo(WeatherForecastInfo weatherForecastInfo){
         setLowTemp(weatherForecastInfo.getLowTemp());
         setHighTemp(weatherForecastInfo.getHighTemp());
@@ -106,5 +110,6 @@ public class WeatherForecastInfo extends Details {
         setSunrise(weatherForecastInfo.getSunrise());
         setSunset(weatherForecastInfo.getSunset());
         setVisibility(weatherForecastInfo.getVisibility());
+        setDate(weatherForecastInfo.getDate());
     }
 }
