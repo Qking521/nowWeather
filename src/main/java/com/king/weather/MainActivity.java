@@ -18,9 +18,7 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.king.weather.data.WeatherInfo;
-
-import org.litepal.crud.DataSupport;
+import com.king.weather.data.WeatherManager;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -39,16 +37,19 @@ public class MainActivity extends AppCompatActivity {
     private FloatingActionButton mAddCityButton;
     private ImageView mDeleteCityButton;
     private NavigationView mNavigationView;
+    private WeatherManager mWeatherManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        mCityCount = DataSupport.findAll(WeatherInfo.class).size();
+        mWeatherManager = WeatherManager.getInstance();
+        mCityCount = mWeatherManager.getWeatherInfos().size();
         if (mCityCount == 0) {
-            goToAddCityActivity();
+            addCity();
         }
         setContentView(R.layout.activity_main);
         getWindow().setStatusBarColor(getResources().getColor(android.R.color.transparent));
+
         initViews();
         if (mCityCount > 0) {
             initData();
@@ -83,17 +84,17 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 MainFragment mainFragment = (MainFragment)getFragmentPagerAdapter().getItem(mCurrentSelectedPager);
-                DataSupport.delete(WeatherInfo.class, mainFragment.getDBId());
+                mWeatherManager.deleteWeather(mainFragment.getDBId());
                 mPagerAdapter = new MainFragmentPagerAdapter(MainActivity.this, getSupportFragmentManager());
                 mViewPager.setAdapter(mPagerAdapter);
-                updateToolbarTitle(mCurrentSelectedPager);
+                updateToolbarTitle(0);
             }
         });
         snackbar.setActionTextColor(Color.RED);
         snackbar.show();
     }
 
-    private void goToAddCityActivity() {
+    private void addCity() {
         Intent intent = new Intent(MainActivity.this, AddCityActivity.class);
         startActivity(intent);
     }
@@ -102,7 +103,7 @@ public class MainActivity extends AppCompatActivity {
         mPagerAdapter = new MainFragmentPagerAdapter(this, getSupportFragmentManager());
         mViewPager.setAdapter(mPagerAdapter);
         mViewPager.addOnPageChangeListener(mOnPageChangeListener);
-        updateToolbarTitle(mCurrentSelectedPager > 0? mCurrentSelectedPager : 0);
+        updateToolbarTitle( 0);
         mToolbarSlide.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -118,7 +119,7 @@ public class MainActivity extends AppCompatActivity {
         mAddCityButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                goToAddCityActivity();
+                addCity();
             }
         });
         mNavigationView.setNavigationItemSelectedListener(new NavigationView.OnNavigationItemSelectedListener() {
@@ -153,9 +154,13 @@ public class MainActivity extends AppCompatActivity {
 
     private void updateToolbarTitle(int position) {
         mCurrentSelectedPager = position;
-        MainFragment mainFragment = (MainFragment) mPagerAdapter.getItem(position);
-        mToolbarTitle.setText(mainFragment.getCityName());
-        mToolbarSubtitle.setText(mainFragment.getCityAdministrativeArea());
+        if (mPagerAdapter.getCount() > 0) {
+            MainFragment mainFragment = (MainFragment) mPagerAdapter.getItem(position);
+            mToolbarTitle.setText(mainFragment.getCityName());
+            mToolbarSubtitle.setText(mainFragment.getCityAdministrativeArea());
+        } else {
+            startActivity(new Intent(this, AddCityActivity.class));
+        }
     }
 
 

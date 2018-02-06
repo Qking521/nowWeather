@@ -71,6 +71,7 @@ public class PermissionCheck {
     }
 
     public static void shouldShowRequestPermissionRationale(final Activity activity, String permission, String rationale){
+        //if has shown Rationale, show rationale dialog
         if (!activity.shouldShowRequestPermissionRationale(permission)){
             ShowRequestPermissionRationaleDialog(activity, rationale, new DialogInterface.OnClickListener() {
                 @Override

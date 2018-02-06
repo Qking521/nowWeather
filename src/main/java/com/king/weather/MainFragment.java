@@ -12,17 +12,13 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
-import com.king.weather.data.CityInfo;
 import com.king.weather.data.DownloadWeather;
 import com.king.weather.data.WeatherForecastInfo;
 import com.king.weather.data.WeatherInfo;
+import com.king.weather.data.WeatherManager;
 import com.king.weather.data.WeatherUtil;
 
-import org.litepal.crud.DataSupport;
-
-import java.util.ArrayList;
 import java.util.List;
 
 
@@ -33,7 +29,8 @@ import java.util.List;
 public class MainFragment extends Fragment {
 
     public static final String TAG = "wq";
-    private WeatherInfo mWeatherInfo = new WeatherInfo();
+    private WeatherInfo mWeatherInfo;
+    private WeatherManager mWeatherManager;
 
     private SwipeRefreshLayout mRefreshLayout;
 
@@ -53,13 +50,13 @@ public class MainFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_main, container, false);
-
         return view;
     }
 
     @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
+        mWeatherManager = WeatherManager.getInstance();
         updateViews(mWeatherInfo);
     }
 
@@ -80,6 +77,7 @@ public class MainFragment extends Fragment {
         if (weatherInfo == null) {
             return;
         }
+        mWeatherInfo = weatherInfo;
         View view = getView();
         TextView weatherCondition = (TextView) view.findViewById(R.id.condition);
         TextView curTemp = (TextView) view.findViewById(R.id.cur_temp);
@@ -117,13 +115,8 @@ public class MainFragment extends Fragment {
     }
 
     private void updateWeatherData() {
-        final List<WeatherInfo> dbWeatherInfoList = DataSupport.findAll(WeatherInfo.class, true);
-        List<CityInfo> cityInfoList = new ArrayList<>();
-        for (WeatherInfo weatherInfo : dbWeatherInfoList) {
-            cityInfoList.add(weatherInfo.getCityInfo());
-        }
-        DownloadWeather downloadWeather =  new DownloadWeather();
-        downloadWeather.startDownloadWeather(cityInfoList, new DownloadWeather.DownLoadWeatherListener() {
+
+        mWeatherManager.downloadWeatherInfo(mWeatherManager.getCityInfos(), new DownloadWeather.DownLoadWeatherListener() {
             @Override
             public void onWeatherUpdateFailed(int paramInt) {
 
@@ -132,22 +125,7 @@ public class MainFragment extends Fragment {
             @Override
             public void onWeatherUpdatedSuccess(List<WeatherInfo> reqWeatherInfoList) {
                 Log.v("wq", "updateWeatherData onWeatherUpdatedSuccess: ");
-                for (WeatherInfo dbWeatherInfo : dbWeatherInfoList) {
-                    for (WeatherInfo reqWeatherInfo : reqWeatherInfoList) {
-                        if (reqWeatherInfo.getCityName().equals(dbWeatherInfo.getCityName())) {
-                            dbWeatherInfo.setWeatherInfo(reqWeatherInfo);
-                            dbWeatherInfo.update(dbWeatherInfo.getId());
-                            List<WeatherForecastInfo> reqWeatherForecastInfoList = reqWeatherInfo.getForecastDetailList();
-                            List<WeatherForecastInfo> dbWeatherForecastInfoList = dbWeatherInfo.getForecastDetailList();
-                            for (int i = 0; i < reqWeatherForecastInfoList.size(); i++) {
-                                WeatherForecastInfo dbWeatherForecastInfo = dbWeatherForecastInfoList.get(i);
-                                dbWeatherForecastInfo.setWeatherForecastInfo(reqWeatherForecastInfoList.get(i));
-                                dbWeatherForecastInfo.update(dbWeatherForecastInfo.getId());
-                            }
-                        }
-                    }
-                }
-
+                mWeatherManager.updateWeatherInfos(reqWeatherInfoList);
                 mRefreshLayout.setRefreshing(false);
                 ((MainActivity)getActivity()).getFragmentPagerAdapter().notifyDataSetChanged();
             }
@@ -157,8 +135,7 @@ public class MainFragment extends Fragment {
 
     //when update the weather, this method will callback by pager adapter
     public void update() {
-        WeatherInfo weatherInfo = DataSupport.find(WeatherInfo.class, getArguments().getLong("id"));
-        mWeatherInfo = weatherInfo;
+        WeatherInfo weatherInfo = mWeatherManager.getWeatherInfoById(getArguments().getLong("id"));
         updateViews(weatherInfo);
     }
 

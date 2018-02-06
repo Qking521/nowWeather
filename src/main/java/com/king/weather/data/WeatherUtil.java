@@ -7,7 +7,9 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Environment;
 import android.util.Log;
+import android.widget.Toast;
 
+import com.king.weather.AddCityActivity;
 import com.king.weather.R;
 
 import java.util.Locale;
@@ -51,6 +53,14 @@ public final class WeatherUtil {
 
 
     public static final String ACTION_SETTING = "com.mega.weather.action.setting";
+
+    public static void showToast(Context context, String msg) {
+        Toast.makeText(context, msg, Toast.LENGTH_SHORT).show();
+    }
+
+    public static void showToast(Context context, String msg, boolean customStyle) {
+        Toast.makeText(context, msg, Toast.LENGTH_SHORT).show();
+    }
 
 
     public final class Setting {
@@ -99,8 +109,8 @@ public final class WeatherUtil {
         for (int i = 0; i < len; i++) {
             if (ta.getText(i).toString().contains(iconType)) {
                 drawableId = ta.getResourceId(i, 0);
+                return drawableId;
             }
-
         }
         return drawableId;
     }
@@ -109,7 +119,7 @@ public final class WeatherUtil {
     public static boolean isNetworkValid(Context context) {
         ConnectivityManager connManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo info = connManager.getActiveNetworkInfo();
-        return (info != null && info.isAvailable());
+        return (info != null && info.isConnected());
     }
 
 

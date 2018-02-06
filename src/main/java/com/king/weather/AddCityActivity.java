@@ -1,23 +1,18 @@
 package com.king.weather;
 
 import android.content.Context;
-import android.location.LocationManager;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.text.Editable;
-import android.text.TextWatcher;
+import android.support.v7.widget.SearchView;
+import android.text.TextUtils;
 import android.util.Log;
-import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.BaseAdapter;
-import android.widget.Button;
-import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -28,11 +23,10 @@ import com.king.weather.data.CityInfo;
 import com.king.weather.data.DownloadCity;
 import com.king.weather.data.DownloadWeather;
 import com.king.weather.data.LocationByBD;
-import com.king.weather.data.WeatherForecastInfo;
 import com.king.weather.data.WeatherInfo;
+import com.king.weather.data.WeatherManager;
+import com.king.weather.data.WeatherUtil;
 import com.king.weather.utils.PermissionCheck;
-
-import org.litepal.crud.DataSupport;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -40,17 +34,16 @@ import java.util.List;
 
 public class AddCityActivity extends AppCompatActivity {
 
-    private EditText mCityEditText;
-    private Button mAddCityButton;
-    private Button mLocationButton;
+    public static final String TAG = "wq";
+
+    private SearchView mSearchView;
     private ListView mSearchResultListView;
+    private TextView mCurrentLocationCity;
 
     private String mSelectedCityName;
     private String cityName;
     private List<CityInfo> mCityInfoList = new ArrayList<>();
-
-    private DownloadCity mDownloadCity;
-    private DownloadWeather mDownloadWeather;
+    private WeatherManager mWeatherManager;
     private InputMethodManager mInputMethodManager;
     private ResultCityAdapter mResultCityAdapter;
 
@@ -58,76 +51,88 @@ public class AddCityActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_add_city);
-        mDownloadCity = new DownloadCity();
-        mDownloadWeather = new DownloadWeather();
+        mWeatherManager = new WeatherManager();
         mInputMethodManager = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
         initViews();
-        initData();
+        initViewsListener();
+        checkLocationPermission();
     }
 
-    private void initData() {
-        mCityEditText.addTextChangedListener(mCityEditTextWatcher);
-        mCityEditText.setOnEditorActionListener(new TextView.OnEditorActionListener() {
-            @Override
-            public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
+    private void checkLocationPermission() {
+        if (!PermissionCheck.isPermissionGranted(AddCityActivity.this, PermissionCheck.PERMISSION_ACCESS_FINE_LOCATION)) {
+            PermissionCheck.requsetPermission(AddCityActivity.this,
+                    new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION},
+                    PermissionCheck.PERMISSION_REQUSTCODE_LOCATION);
+        } else {
+            location();
+        }
+    }
 
-                if (actionId == EditorInfo.IME_ACTION_DONE) {
-                    Log.v("wq", "onEditorAction: ");
-                    mDownloadCity.startDownloadCity(cityName, mDownLoadCityListener);
-                }
-                return false;
-            }
-        });
-        mAddCityButton.setOnClickListener(new View.OnClickListener() {
+    private void initViewsListener() {
+        mCurrentLocationCity.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                mInputMethodManager.hideSoftInputFromWindow(mCityEditText.getWindowToken(), 0);
-                mDownloadCity.startDownloadCity(cityName, mDownLoadCityListener);
+                mWeatherManager.downloadCityInfo(mCurrentLocationCity.getText().toString(), mDownLoadCityListener);
             }
         });
-        mLocationButton.setOnClickListener(new View.OnClickListener() {
+        mSearchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
-            public void onClick(View v) {
-                if (!PermissionCheck.isPermissionGranted(AddCityActivity.this, PermissionCheck.PERMISSION_ACCESS_FINE_LOCATION)) {
-                    PermissionCheck.requsetPermission(AddCityActivity.this,
-                            new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION},
-                            PermissionCheck.PERMISSION_REQUSTCODE_LOCATION);
-                } else {
-                    location();
+            public boolean onQueryTextSubmit(String query) {
+                Log.d("wq", "onQueryTextSubmit:query="+ query);
+                mInputMethodManager.toggleSoftInput(0, InputMethodManager.HIDE_NOT_ALWAYS);
+                if (!WeatherUtil.isNetworkValid(AddCityActivity.this)) {
+                    WeatherUtil.showToast(AddCityActivity.this, "network error, please check");
+                    return true;
                 }
+                mWeatherManager.downloadCityInfo(query.trim(), mDownLoadCityListener);
+                return true;
+            };
+
+            @Override
+            public boolean onQueryTextChange(String newText) {
+                return true;
             }
         });
+
         mSearchResultListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 mSelectedCityName = mCityInfoList.get(position).getCityName();
-                mDownloadWeather.startDownloadWeather(Arrays.asList(mCityInfoList.get(position)), mDownLoadWeatherListener);
+                mWeatherManager.downloadWeatherInfo(Arrays.asList(mCityInfoList.get(position)),  mDownLoadWeatherListener);
             }
         });
+    }
+
+    private void initViews() {
+        mCurrentLocationCity = (TextView) findViewById(R.id.add_city_current_location);
+        mSearchView = (SearchView) findViewById(R.id.add_city_searchview);
+        mSearchResultListView = (ListView) findViewById(R.id.add_listview);
         mResultCityAdapter = new ResultCityAdapter(this, mCityInfoList);
         mSearchResultListView.setAdapter(mResultCityAdapter);
     }
 
-    private void initViews() {
-        mCityEditText = (EditText) findViewById(R.id.add_city_edittext);
-        mAddCityButton = (Button) findViewById(R.id.add_city_add);
-        mSearchResultListView = (ListView) findViewById(R.id.add_listview);
-        mLocationButton = (Button) findViewById(R.id.add_city_location);
-    }
-
 
     private void location() {
+        Log.d(TAG, "location: ");
         final LocationByBD locationByBD = new LocationByBD(this);
         locationByBD.startBaiDuLocationService(new BDLocationListener() {
             @Override
             public void onReceiveLocation(BDLocation bdLocation) {
-                mDownloadCity.startDownloadCity(bdLocation.getCity(), mDownLoadCityListener);
+                String locationCity = bdLocation.getCity();
+                Log.d(TAG, "onReceiveLocation: " + locationCity == null ? "locationCity null" : locationCity);
+                if (!TextUtils.isEmpty(locationCity)) {
+                    mCurrentLocationCity.setVisibility(View.VISIBLE);
+                    mCurrentLocationCity.setText("current location city is : "+ bdLocation.getCity());
+                } else {
+                    mCurrentLocationCity.setVisibility(View.GONE);
+                }
                 locationByBD.stopBaiDuLocationService();
             }
 
             @Override
             public void onConnectHotSpotMessage(String s, int i) {
-
+                Log.d(TAG, "onConnectHotSpotMessage: ");
+                mCurrentLocationCity.setText(s.trim());
             }
         });
 
@@ -146,30 +151,13 @@ public class AddCityActivity extends AppCompatActivity {
         }
     }
 
-    private TextWatcher mCityEditTextWatcher = new TextWatcher() {
-
-        @Override
-        public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-
-        }
-
-        @Override
-        public void onTextChanged(CharSequence s, int start, int before, int count) {
-
-        }
-
-        @Override
-        public void afterTextChanged(Editable s) {
-            cityName = s.toString().trim();
-        }
-    };
-
     private DownloadCity.DownLoadCityListener mDownLoadCityListener = new DownloadCity.DownLoadCityListener() {
         @Override
         public void onCityDownLoadResult(ArrayList<CityInfo> cityInfoList) {
 
             if (mCityInfoList != null) mCityInfoList.clear();
             mCityInfoList.addAll(cityInfoList);
+            mSearchResultListView.setVisibility(View.VISIBLE);
             mResultCityAdapter.notifyDataSetChanged();
 
         }
@@ -183,44 +171,10 @@ public class AddCityActivity extends AppCompatActivity {
 
         @Override
         public void onWeatherUpdatedSuccess(List<WeatherInfo> reqWeatherDataList) {
-            saveToDatabase(reqWeatherDataList);
+            mWeatherManager.addWeatherInfos(reqWeatherDataList.get(0));
             finish();
         }
     };
-
-    private void saveToDatabase(List<WeatherInfo> reqWeatherInfoList) {
-
-        //query all weather include bounded table
-        List<WeatherInfo> dbWeatherInfoList = DataSupport.findAll(WeatherInfo.class, true);
-        //this is only one city, so get the first one.
-        WeatherInfo reqWeatherInfo = reqWeatherInfoList.get(0);
-        //if database is empty, save directly. if not, need to judge whether to update.
-        boolean isNeedUpdate = false;
-        if (dbWeatherInfoList.size() > 0) {
-            for (WeatherInfo dbWeatherInfo : dbWeatherInfoList) {
-                List<WeatherForecastInfo> reqWeatherForecastInfoList = reqWeatherInfo.getForecastDetailList();
-                List<WeatherForecastInfo> dbWeatherForecastInfoList = dbWeatherInfo.getForecastDetailList();
-                //if the city has been in database, update, if not , save.
-                if (dbWeatherInfo.getCityName().equals(mSelectedCityName)) {
-                    isNeedUpdate = true;
-                    dbWeatherInfo.setWeatherInfo(reqWeatherInfo);
-                    dbWeatherInfo.update(dbWeatherInfo.getId());
-                    for (int i = 0; i < reqWeatherForecastInfoList.size(); i++) {
-                        WeatherForecastInfo dbWeatherForecastInfo = dbWeatherForecastInfoList.get(i);
-                        dbWeatherForecastInfo.setWeatherForecastInfo(reqWeatherForecastInfoList.get(i));
-                        dbWeatherForecastInfo.update(dbWeatherForecastInfo.getId());
-                    }
-                }
-            }
-            if (!isNeedUpdate) {
-                reqWeatherInfo.save();
-                DataSupport.saveAll(reqWeatherInfo.getForecastDetailList());
-            }
-        } else {
-            reqWeatherInfo.save();
-            DataSupport.saveAll(reqWeatherInfo.getForecastDetailList());
-        }
-    }
 
     class ResultCityAdapter extends BaseAdapter {
 
@@ -260,6 +214,4 @@ public class AddCityActivity extends AppCompatActivity {
             return convertView;
         }
     }
-
-
 }

@@ -4,11 +4,11 @@ import android.content.Context;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentStatePagerAdapter;
+import android.util.Log;
 import android.view.ViewGroup;
 
 import com.king.weather.data.WeatherInfo;
-
-import org.litepal.crud.DataSupport;
+import com.king.weather.data.WeatherManager;
 
 import java.util.List;
 
@@ -19,17 +19,20 @@ import java.util.List;
 public class MainFragmentPagerAdapter extends FragmentStatePagerAdapter {
 
     private Context mContext;
-    List<WeatherInfo> mWeatherInfoList;
+    private List<WeatherInfo> mWeatherInfoList;
+    private WeatherManager mWeatherManager;
 
     public MainFragmentPagerAdapter(Context context, FragmentManager fragmentManager){
         super(fragmentManager);
         mContext = context;
-        mWeatherInfoList = DataSupport.findAll(WeatherInfo.class, true);
+        mWeatherManager = WeatherManager.getInstance();
+        mWeatherInfoList = mWeatherManager.getWeatherInfos();
     }
 
     @Override
     public Fragment getItem(int position) {
         WeatherInfo weatherInfo = mWeatherInfoList.get(position);
+        Log.d("wq", "getItem: id="+ weatherInfo.getId());
         MainFragment fragment = MainFragment.newInstance(weatherInfo.getId());
         fragment.setData(weatherInfo);
         return fragment;
@@ -61,6 +64,4 @@ public class MainFragmentPagerAdapter extends FragmentStatePagerAdapter {
     public void destroyItem(ViewGroup container, int position, Object object) {
         super.destroyItem(container, position, object);
     }
-
-
 }
