@@ -32,18 +32,23 @@ public class MainFragment extends Fragment {
     private WeatherInfo mWeatherInfo;
     private WeatherManager mWeatherManager;
 
-    private SwipeRefreshLayout mRefreshLayout;
+
 
     public static MainFragment newInstance(long id) {
         MainFragment fragment = new MainFragment();
         Bundle bundle = new Bundle();
-        bundle.putLong("id", id);
+        bundle.putLong("id",  id);
         fragment.setArguments(bundle);
         return fragment;
     }
 
-    public void setData(WeatherInfo weatherData) {
-        mWeatherInfo = weatherData;
+    public MainFragment() {
+        mWeatherManager = WeatherManager.getInstance();
+    }
+
+    public void setData(WeatherInfo weatherInfo) {
+        Log.d(TAG, "setData: ");
+        mWeatherInfo = weatherInfo;
     }
 
     @Nullable
@@ -54,42 +59,29 @@ public class MainFragment extends Fragment {
     }
 
     @Override
-    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
-        mWeatherManager = WeatherManager.getInstance();
-        updateViews(mWeatherInfo);
+    public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        initViews();
     }
 
     private void initViewsEvents() {
-        mRefreshLayout.setColorSchemeColors(Color.BLUE);
-        mRefreshLayout.setProgressBackgroundColorSchemeColor(Color.WHITE);
-        mRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
-            @Override
-            public void onRefresh() {
-                updateWeatherData();
-                Log.v("wq", "onRefresh: ");
-            }
-        });
+
     }
 
     //update view that maybe change.
-    private void updateViews(WeatherInfo weatherInfo) {
-        if (weatherInfo == null) {
-            return;
-        }
-        mWeatherInfo = weatherInfo;
+    private void initViews() {
         View view = getView();
         TextView weatherCondition = (TextView) view.findViewById(R.id.condition);
         TextView curTemp = (TextView) view.findViewById(R.id.cur_temp);
         ImageView weatherIcon = (ImageView) view.findViewById(R.id.weather_icon);
-        mRefreshLayout = (SwipeRefreshLayout) view.findViewById(R.id.refresh_layout);
 
 
         initViewsEvents();
-        curTemp.setText(weatherInfo.getCurTemp() + "\n"+ weatherInfo.getLastUpdateFormatTime());
-        weatherCondition.setText(weatherInfo.getCondition());
-        weatherIcon.setImageResource(WeatherUtil.getDrawable(getContext(), weatherInfo.getIcon()));
-        addForecastViews(view, weatherInfo);
+        curTemp.setText(mWeatherInfo.getCurTemp() + "\n"+ mWeatherInfo.getLastUpdateFormatTime());
+        weatherCondition.setText(mWeatherInfo.getCondition());
+        weatherIcon.setImageResource(WeatherUtil.getDrawable(getContext(), mWeatherInfo.getIcon()));
+
+        addForecastViews(view, mWeatherInfo);
     }
 
     private void addForecastViews(View view, WeatherInfo weatherInfo) {
@@ -111,32 +103,6 @@ public class MainFragment extends Fragment {
             forecastHighTemp.setText(weatherForecastInfo.getHighTemp());
             forecastContainer.addView(forecastView);
         }
-
-    }
-
-    private void updateWeatherData() {
-
-        mWeatherManager.downloadWeatherInfo(mWeatherManager.getCityInfos(), new DownloadWeather.DownLoadWeatherListener() {
-            @Override
-            public void onWeatherUpdateFailed(int paramInt) {
-
-            }
-
-            @Override
-            public void onWeatherUpdatedSuccess(List<WeatherInfo> reqWeatherInfoList) {
-                Log.v("wq", "updateWeatherData onWeatherUpdatedSuccess: ");
-                mWeatherManager.updateWeatherInfos(reqWeatherInfoList);
-                mRefreshLayout.setRefreshing(false);
-                ((MainActivity)getActivity()).getFragmentPagerAdapter().notifyDataSetChanged();
-            }
-
-        });
-    }
-
-    //when update the weather, this method will callback by pager adapter
-    public void update() {
-        WeatherInfo weatherInfo = mWeatherManager.getWeatherInfoById(getArguments().getLong("id"));
-        updateViews(weatherInfo);
     }
 
     public long getDBId() {
@@ -150,6 +116,7 @@ public class MainFragment extends Fragment {
     public String getCityAdministrativeArea() {
         return mWeatherInfo.getProvince() + ","+ mWeatherInfo.getCountry();
     }
+
 
 
 }

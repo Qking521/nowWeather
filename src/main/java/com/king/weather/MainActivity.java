@@ -1,14 +1,17 @@
 package com.king.weather;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Color;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
 import android.support.design.widget.Snackbar;
+import android.support.v4.app.Fragment;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.view.ViewPager;
 import android.support.v4.widget.DrawerLayout;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
@@ -18,17 +21,26 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.king.weather.data.DownloadWeather;
+import com.king.weather.data.WeatherInfo;
 import com.king.weather.data.WeatherManager;
+import com.king.weather.utils.VpSwipeRefreshLayout;
+
+import java.util.ArrayList;
+import java.util.List;
 
 
 public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = "wq";
-    private MainFragmentPagerAdapter mPagerAdapter;
-    private int mCityCount = -1;
-    private int mCurrentSelectedPager = -1;
+    public static final int REQUEST_CODE_ADD_CITY = 1;
+
+    private ViewPagerAdapter mPagerAdapter;
+    private List<Fragment> mMainFragments = new ArrayList<Fragment>();
+    private int mCurrentSelectedPager = 0;
 
     private ViewPager mViewPager;
+    private VpSwipeRefreshLayout mRefreshLayout;
     private DrawerLayout mDrawerLayout;
     private Toolbar mToolbar;
     private TextView mToolbarTitle;
@@ -42,30 +54,21 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        mWeatherManager = WeatherManager.getInstance();
-        mCityCount = mWeatherManager.getWeatherInfos().size();
-        if (mCityCount == 0) {
-            addCity();
-        }
+
         setContentView(R.layout.activity_main);
         getWindow().setStatusBarColor(getResources().getColor(android.R.color.transparent));
-
-        initViews();
-        if (mCityCount > 0) {
+        mWeatherManager = WeatherManager.getInstance();
+        if (mWeatherManager.getWeatherInfos().size() == 0) {
+            addCity();
+        } else {
+            initViews();
             initData();
         }
-
-
-    }
-
-    @Override
-    protected void onRestart() {
-        super.onRestart();
-        initData();
     }
 
     private void initViews() {
         mViewPager = (ViewPager) findViewById(R.id.main_view_pager);
+        mRefreshLayout = (VpSwipeRefreshLayout)findViewById(R.id.refresh_layout) ;
         mToolbar = (Toolbar) findViewById(R.id.main_toolbar);
         mDrawerLayout = (DrawerLayout) findViewById(R.id.main_drawer_layout);
         mAddCityButton = (FloatingActionButton) findViewById(R.id.main_add_city_button);
@@ -77,17 +80,15 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void showDeleteView() {
-        Log.v(TAG, "showDeleteView: ");
         Snackbar snackbar = Snackbar.make(mAddCityButton,
                 getString(R.string.tips_delete_city), Snackbar.LENGTH_LONG);
         snackbar.setAction(getString(R.string.snack_action_delete), new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                MainFragment mainFragment = (MainFragment)getFragmentPagerAdapter().getItem(mCurrentSelectedPager);
-                mWeatherManager.deleteWeather(mainFragment.getDBId());
-                mPagerAdapter = new MainFragmentPagerAdapter(MainActivity.this, getSupportFragmentManager());
-                mViewPager.setAdapter(mPagerAdapter);
-                updateToolbarTitle(0);
+//                MainFragment mainFragment = mMainFragments.get(mCurrentSelectedPager);
+//                mWeatherManager.deleteWeatherInfo(mainFragment.getDBId());
+//                mMainFragments.remove(mainFragment);
+//                mPagerAdapter.notifyDataSetChanged();
             }
         });
         snackbar.setActionTextColor(Color.RED);
@@ -96,14 +97,54 @@ public class MainActivity extends AppCompatActivity {
 
     private void addCity() {
         Intent intent = new Intent(MainActivity.this, AddCityActivity.class);
-        startActivity(intent);
+        startActivityForResult(intent, REQUEST_CODE_ADD_CITY);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == REQUEST_CODE_ADD_CITY) {
+            //this indicate that successed add city on addCityActivity
+            if (resultCode == Activity.RESULT_OK) {
+                initViews();
+                initData(true);
+            }
+        }
     }
 
     private void initData() {
-        mPagerAdapter = new MainFragmentPagerAdapter(this, getSupportFragmentManager());
+        //called on create
+        initData(false);
+    }
+
+    /**
+     * called when added city
+     * @param addedCity
+     */
+    private void initData(boolean addedCity) {
+        mMainFragments.clear();
+        for (WeatherInfo weatherInfo : mWeatherManager.getWeatherInfos()) {
+            MainFragment fragment = MainFragment.newInstance(weatherInfo.getId());
+            fragment.setData(weatherInfo);
+            mMainFragments.add(fragment);
+        }
+        if (addedCity) {
+            mCurrentSelectedPager = mMainFragments.size() - 1;
+        }
+        mRefreshLayout.setColorSchemeColors(Color.BLUE);
+        mRefreshLayout.setProgressBackgroundColorSchemeColor(Color.WHITE);
+        mRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                updateWeatherInfo();
+            }
+        });
+        mPagerAdapter = new ViewPagerAdapter(getSupportFragmentManager(), mMainFragments);
         mViewPager.setAdapter(mPagerAdapter);
         mViewPager.addOnPageChangeListener(mOnPageChangeListener);
-        updateToolbarTitle( 0);
+
+        mViewPager.setCurrentItem(mCurrentSelectedPager, true);
+        updateToolbarTitle( mCurrentSelectedPager);
         mToolbarSlide.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -136,6 +177,24 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    private void updateWeatherInfo() {
+
+        mWeatherManager.downloadWeatherInfo(mWeatherManager.getCityInfos(), new DownloadWeather.DownLoadWeatherListener() {
+            @Override
+            public void onWeatherUpdateFailed(int paramInt) {
+
+            }
+
+            @Override
+            public void onWeatherUpdatedSuccess(List<WeatherInfo> reqWeatherInfoList) {
+                Log.v("wq", "updateWeatherInfo onWeatherUpdatedSuccess: ");
+                mWeatherManager.updateWeatherInfos(reqWeatherInfoList);
+                mRefreshLayout.setRefreshing(false);
+                initData();
+            }
+        });
+    }
+
     private ViewPager.OnPageChangeListener mOnPageChangeListener = new ViewPager.OnPageChangeListener() {
         @Override
         public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
@@ -153,18 +212,12 @@ public class MainActivity extends AppCompatActivity {
     };
 
     private void updateToolbarTitle(int position) {
-        mCurrentSelectedPager = position;
-        if (mPagerAdapter.getCount() > 0) {
-            MainFragment mainFragment = (MainFragment) mPagerAdapter.getItem(position);
-            mToolbarTitle.setText(mainFragment.getCityName());
-            mToolbarSubtitle.setText(mainFragment.getCityAdministrativeArea());
-        } else {
-            startActivity(new Intent(this, AddCityActivity.class));
-        }
+        MainFragment mainFragment = getCurrentFragment(position);
+        mToolbarTitle.setText(mainFragment.getCityName());
+        mToolbarSubtitle.setText(mainFragment.getCityAdministrativeArea());
     }
 
-
-    public MainFragmentPagerAdapter getFragmentPagerAdapter() {
-        return mPagerAdapter;
+    private MainFragment getCurrentFragment(int position) {
+        return  (MainFragment) mPagerAdapter.getItem(position);
     }
 }

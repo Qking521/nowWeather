@@ -118,7 +118,7 @@ public class WeatherManager {
     }
 
     //delete database by id
-    public void deleteWeather(long dbId) {
+    public void deleteWeatherInfo(long dbId) {
         DataSupport.delete(WeatherInfo.class, dbId);
     }
 }

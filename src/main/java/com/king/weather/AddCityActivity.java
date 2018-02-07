@@ -1,5 +1,6 @@
 package com.king.weather;
 
+import android.app.Activity;
 import android.content.Context;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
@@ -51,6 +52,7 @@ public class AddCityActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_add_city);
+        getWindow().setStatusBarColor(getResources().getColor(android.R.color.transparent));
         mWeatherManager = new WeatherManager();
         mInputMethodManager = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
         initViews();
@@ -172,6 +174,7 @@ public class AddCityActivity extends AppCompatActivity {
         @Override
         public void onWeatherUpdatedSuccess(List<WeatherInfo> reqWeatherDataList) {
             mWeatherManager.addWeatherInfos(reqWeatherDataList.get(0));
+            setResult(Activity.RESULT_OK);
             finish();
         }
     };
