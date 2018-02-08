@@ -30,7 +30,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements NavigationFragment.OnItemClickListener{
 
     private static final String TAG = "wq";
     public static final int REQUEST_CODE_ADD_CITY = 1;
@@ -48,7 +48,6 @@ public class MainActivity extends AppCompatActivity {
     private ImageView mToolbarSlide;
     private FloatingActionButton mAddCityButton;
     private ImageView mDeleteCityButton;
-    private NavigationView mNavigationView;
     private WeatherManager mWeatherManager;
 
     @Override
@@ -76,7 +75,7 @@ public class MainActivity extends AppCompatActivity {
         mToolbarTitle = (TextView) mToolbar.findViewById(R.id.main_title);
         mToolbarSubtitle = (TextView) mToolbar.findViewById(R.id.main_subtitle);
         mToolbarSlide = (ImageView) mToolbar.findViewById(R.id.main_slide);
-        mNavigationView = (NavigationView) findViewById(R.id.main_navigation);
+
     }
 
     private void showDeleteView() {
@@ -163,17 +162,6 @@ public class MainActivity extends AppCompatActivity {
                 addCity();
             }
         });
-        mNavigationView.setNavigationItemSelectedListener(new NavigationView.OnNavigationItemSelectedListener() {
-            @Override
-            public boolean onNavigationItemSelected(@NonNull MenuItem item) {
-                int menuId = item.getItemId();
-                switch (menuId) {
-                    case R.id.menu_app_recommend:
-                        startActivity(new Intent(MainActivity.this, AppRecommendActivity.class));
-                }
-                return true;
-            }
-        });
 
     }
 
@@ -219,5 +207,13 @@ public class MainActivity extends AppCompatActivity {
 
     private MainFragment getCurrentFragment(int position) {
         return  (MainFragment) mPagerAdapter.getItem(position);
+    }
+
+    @Override
+    public void onItemClick(int position) {
+        mCurrentSelectedPager = position;
+        mDrawerLayout.closeDrawer(GravityCompat.START);
+        mViewPager.setCurrentItem(position, true);
+
     }
 }

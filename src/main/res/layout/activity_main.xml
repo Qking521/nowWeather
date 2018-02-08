@@ -47,14 +47,12 @@
 
     </com.king.weather.utils.VpSwipeRefreshLayout>
 
-    <android.support.design.widget.NavigationView
-        android:id="@+id/main_navigation"
+    <fragment
+        android:id="@+id/main_navigation_fragment"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_gravity="start"
-        app:headerLayout="@layout/navigation_header_layout"
-        app:insetForeground="#00000000"
-        app:menu="@menu/main_menu" />
+        android:name="com.king.weather.NavigationFragment"/>
 
 
 </android.support.v4.widget.DrawerLayout>
