@@ -2,6 +2,7 @@ package com.king.weather.data;
 
 
 import android.support.annotation.Nullable;
+import android.text.TextUtils;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -137,16 +138,16 @@ public final class WeatherInfo extends Details{
     }
 
     public  String getLastUpdateFormatTime() {
-        setLastUpdateFormatTime(null);
-        return lastUpdateFormatTime;
+        return getLastUpdateFormatTime(null);
     }
 
-    public void setLastUpdateFormatTime(@Nullable String format) {
-        if (format == null || "".equals(format)) {
+    public String getLastUpdateFormatTime(@Nullable String format) {
+        if (TextUtils.isEmpty(format)) {
             format = "yyyy/MM/dd HH:mm";
         }
         SimpleDateFormat dateFormat = new SimpleDateFormat(format);
         lastUpdateFormatTime = dateFormat.format(getLastUpdateTime());
+        return lastUpdateFormatTime;
     }
 
     public CityInfo createCityInfo() {

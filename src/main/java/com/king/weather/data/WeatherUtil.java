@@ -9,7 +9,6 @@ import android.os.Environment;
 import android.util.Log;
 import android.widget.Toast;
 
-import com.king.weather.AddCityActivity;
 import com.king.weather.R;
 
 import java.util.Locale;

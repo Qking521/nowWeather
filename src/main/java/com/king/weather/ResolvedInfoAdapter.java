@@ -34,6 +34,8 @@ public class ResolvedInfoAdapter extends BaseAdapter {
         layoutInflater = LayoutInflater.from(context);
         this.layoutId = layoutId;
     }
+
+
     @Override
     public int getCount() {
         return resolvedInfoList.size();
@@ -63,7 +65,7 @@ public class ResolvedInfoAdapter extends BaseAdapter {
         return convertView;
     }
 
-    private void onBindView(ViewHolder viewHolder, View convertView, ResolvedInfo resolvedInfo) {
+    private void onBindView(ViewHolder viewHolder, View convertView, final ResolvedInfo resolvedInfo) {
         viewHolder.icon = (ImageView) convertView.findViewById(R.id.icon);
         viewHolder.title = (TextView) convertView.findViewById(R.id.title);
         viewHolder.summary = (TextView) convertView.findViewById(R.id.summary);

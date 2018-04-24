@@ -32,8 +32,6 @@ public class MainFragment extends Fragment {
     private WeatherInfo mWeatherInfo;
     private WeatherManager mWeatherManager;
 
-
-
     public static MainFragment newInstance(long id) {
         MainFragment fragment = new MainFragment();
         Bundle bundle = new Bundle();
@@ -75,9 +73,8 @@ public class MainFragment extends Fragment {
         TextView curTemp = (TextView) view.findViewById(R.id.cur_temp);
         ImageView weatherIcon = (ImageView) view.findViewById(R.id.weather_icon);
 
-
         initViewsEvents();
-        curTemp.setText(mWeatherInfo.getCurTemp() + "\n"+ mWeatherInfo.getLastUpdateFormatTime());
+        curTemp.setText(mWeatherInfo.getCurTemp());
         weatherCondition.setText(mWeatherInfo.getCondition());
         weatherIcon.setImageResource(WeatherUtil.getDrawable(getContext(), mWeatherInfo.getIcon()));
 
@@ -115,6 +112,14 @@ public class MainFragment extends Fragment {
 
     public String getCityAdministrativeArea() {
         return mWeatherInfo.getProvince() + ","+ mWeatherInfo.getCountry();
+    }
+
+    public String getLastUpdateDateTime() {
+        return mWeatherInfo.getLastUpdateFormatTime();
+    }
+
+    public String getLastUpdateTime() {
+        return mWeatherInfo.getLastUpdateFormatTime("HH: mm");
     }
 
 

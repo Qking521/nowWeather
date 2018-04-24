@@ -2,9 +2,10 @@ package com.king.weather;
 
 import android.app.Activity;
 import android.content.Context;
-import android.support.annotation.NonNull;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
+import android.support.v4.app.Fragment;
 import android.support.v7.widget.SearchView;
 import android.text.TextUtils;
 import android.util.Log;
@@ -33,36 +34,75 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class AddCityActivity extends AppCompatActivity {
+/**
+ * Created by wangqiang on 2018/2/8.
+ */
+
+public class AddCityFragment extends Fragment {
+
+    public interface OnCityAddedListener {
+        void onCityAdded();
+    }
 
     public static final String TAG = "wq";
 
     private SearchView mSearchView;
     private ListView mSearchResultListView;
     private TextView mCurrentLocationCity;
-
-    private String mSelectedCityName;
-    private String cityName;
     private List<CityInfo> mCityInfoList = new ArrayList<>();
     private WeatherManager mWeatherManager;
     private InputMethodManager mInputMethodManager;
     private ResultCityAdapter mResultCityAdapter;
 
+    private OnCityAddedListener mCityAddedListener;
+    private Activity mActivity;
+
+    static AddCityFragment addCityFragment = null;
+
+    public static AddCityFragment newInstance() {
+        if (addCityFragment == null) {
+            return addCityFragment = new AddCityFragment();
+        } else {
+           return addCityFragment;
+        }
+    }
+
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    public void onAttach(Context context) {
+        super.onAttach(context);
+        if (context instanceof OnCityAddedListener) {
+            mCityAddedListener = (OnCityAddedListener) context;
+        } else {
+            throw new RuntimeException("must implement OnCityAddedListener in AddCityFragment ");
+        }
+        mActivity = (Activity)context;
+    }
+
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_add_city);
-        getWindow().setStatusBarColor(getResources().getColor(android.R.color.transparent));
         mWeatherManager = new WeatherManager();
-        mInputMethodManager = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-        initViews();
-        initViewsListener();
+        mInputMethodManager = (InputMethodManager) getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
+    }
+
+    @Nullable
+    @Override
+    public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+        View rootView = inflater.inflate(R.layout.activity_add_city, container, false);
+        initViews(rootView);
+        return rootView;
+    }
+
+    @Override
+    public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
         checkLocationPermission();
+        initViewsListener();
     }
 
     private void checkLocationPermission() {
-        if (!PermissionCheck.isPermissionGranted(AddCityActivity.this, PermissionCheck.PERMISSION_ACCESS_FINE_LOCATION)) {
-            PermissionCheck.requsetPermission(AddCityActivity.this,
+        if (!PermissionCheck.isPermissionGranted(getContext(), PermissionCheck.PERMISSION_ACCESS_FINE_LOCATION)) {
+            PermissionCheck.requsetPermission(getActivity(),
                     new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION},
                     PermissionCheck.PERMISSION_REQUSTCODE_LOCATION);
         } else {
@@ -82,8 +122,8 @@ public class AddCityActivity extends AppCompatActivity {
             public boolean onQueryTextSubmit(String query) {
                 Log.d("wq", "onQueryTextSubmit:query="+ query);
                 mInputMethodManager.toggleSoftInput(0, InputMethodManager.HIDE_NOT_ALWAYS);
-                if (!WeatherUtil.isNetworkValid(AddCityActivity.this)) {
-                    WeatherUtil.showToast(AddCityActivity.this, "network error, please check");
+                if (!WeatherUtil.isNetworkValid(getContext())) {
+                    WeatherUtil.showToast(getActivity(), "network error, please check");
                     return true;
                 }
                 mWeatherManager.downloadCityInfo(query.trim(), mDownLoadCityListener);
@@ -99,36 +139,47 @@ public class AddCityActivity extends AppCompatActivity {
         mSearchResultListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                mSelectedCityName = mCityInfoList.get(position).getCityName();
                 mWeatherManager.downloadWeatherInfo(Arrays.asList(mCityInfoList.get(position)),  mDownLoadWeatherListener);
             }
         });
     }
 
-    private void initViews() {
-        mCurrentLocationCity = (TextView) findViewById(R.id.add_city_current_location);
-        mSearchView = (SearchView) findViewById(R.id.add_city_searchview);
-        mSearchResultListView = (ListView) findViewById(R.id.add_listview);
-        mResultCityAdapter = new ResultCityAdapter(this, mCityInfoList);
+    private void initViews(View rootView) {
+        mCurrentLocationCity = (TextView)rootView.findViewById(R.id.add_city_current_location);
+        mSearchView = (SearchView) rootView.findViewById(R.id.add_city_searchview);
+        mSearchResultListView = (ListView) rootView.findViewById(R.id.add_listview);
+        mResultCityAdapter = new ResultCityAdapter(getContext(), mCityInfoList);
         mSearchResultListView.setAdapter(mResultCityAdapter);
     }
 
 
     private void location() {
         Log.d(TAG, "location: ");
-        final LocationByBD locationByBD = new LocationByBD(this);
+        final LocationByBD locationByBD = new LocationByBD(getContext());
         locationByBD.startBaiDuLocationService(new BDLocationListener() {
             @Override
-            public void onReceiveLocation(BDLocation bdLocation) {
-                String locationCity = bdLocation.getCity();
+            public void onReceiveLocation(final BDLocation bdLocation) {
+                final String locationCity = bdLocation.getCity();
                 Log.d(TAG, "onReceiveLocation: " + locationCity == null ? "locationCity null" : locationCity);
-                if (!TextUtils.isEmpty(locationCity)) {
-                    mCurrentLocationCity.setVisibility(View.VISIBLE);
-                    mCurrentLocationCity.setText("current location city is : "+ bdLocation.getCity());
-                } else {
-                    mCurrentLocationCity.setVisibility(View.GONE);
-                }
-                locationByBD.stopBaiDuLocationService();
+                mActivity.runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (!TextUtils.isEmpty(locationCity)) {
+                            mCurrentLocationCity.setVisibility(View.VISIBLE);
+                            mCurrentLocationCity.setText(bdLocation.getCity());
+                            mCurrentLocationCity.setOnClickListener(new View.OnClickListener() {
+                                @Override
+                                public void onClick(View v) {
+                                    mWeatherManager.downloadCityInfo(bdLocation.getCity(), mDownLoadCityListener);
+                                }
+                            });
+                        } else {
+                            mCurrentLocationCity.setVisibility(View.GONE);
+                        }
+                        locationByBD.stopBaiDuLocationService();
+                    }
+                });
+
             }
 
             @Override
@@ -148,7 +199,7 @@ public class AddCityActivity extends AppCompatActivity {
             if (PermissionCheck.RESULT_REQUSTCODE_LOCATION) {
                 location();
             } else {
-                PermissionCheck.shouldShowRequestPermissionRationale(this, permissions[0], getString(R.string.permission_rational_message));
+                PermissionCheck.shouldShowRequestPermissionRationale(getActivity(), permissions[0], getString(R.string.permission_rational_message));
             }
         }
     }
@@ -159,6 +210,7 @@ public class AddCityActivity extends AppCompatActivity {
 
             if (mCityInfoList != null) mCityInfoList.clear();
             mCityInfoList.addAll(cityInfoList);
+
             mSearchResultListView.setVisibility(View.VISIBLE);
             mResultCityAdapter.notifyDataSetChanged();
 
@@ -168,14 +220,13 @@ public class AddCityActivity extends AppCompatActivity {
     private DownloadWeather.DownLoadWeatherListener mDownLoadWeatherListener = new DownloadWeather.DownLoadWeatherListener() {
         @Override
         public void onWeatherUpdateFailed(int paramInt) {
-            Toast.makeText(AddCityActivity.this, "weather update failed " + paramInt, Toast.LENGTH_SHORT).show();
+            Toast.makeText(getActivity(), "weather update failed " + paramInt, Toast.LENGTH_SHORT).show();
         }
 
         @Override
         public void onWeatherUpdatedSuccess(List<WeatherInfo> reqWeatherDataList) {
             mWeatherManager.addWeatherInfos(reqWeatherDataList.get(0));
-            setResult(Activity.RESULT_OK);
-            finish();
+            mCityAddedListener.onCityAdded();
         }
     };
 
